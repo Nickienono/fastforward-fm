@@ -1185,6 +1185,7 @@ function selectPitchPlayer(idx) {
        [myTeam.starters[selectedPlayer.idx], myTeam.starters[idx]];
     }
     selectedPlayer = null;
+    saveGame();
     toast('Spelers gewisseld!');
   } else {
     selectedPlayer = { from: 'pitch', idx };
@@ -1206,6 +1207,7 @@ function selectBenchPlayer(idx) {
        [myTeam.bench[selectedPlayer.idx], myTeam.bench[idx]];
     }
     selectedPlayer = null;
+    saveGame();
     toast('Gewisseld!');
   } else {
     selectedPlayer = { from: 'bench', idx };
