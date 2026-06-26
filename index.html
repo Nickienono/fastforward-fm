@@ -197,6 +197,21 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
 .modal-bg.open { display: flex; }
 .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 460px; width: 100%; max-height: 88vh; overflow-y: auto; }
+.modal-wide { max-width: 680px; }
+.btn-secondary { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all .15s; }
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+.ts-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.ts-table th { text-align: left; padding: 8px 10px; font-size: .72rem; text-transform: uppercase; letter-spacing:.8px; color: var(--dim); border-bottom: 1px solid var(--border); }
+.ts-table td { padding: 9px 10px; border-bottom: 1px solid rgba(48,54,61,.4); }
+.ts-table tr:hover td { background: rgba(255,255,255,.03); }
+.ts-table .me td { background: rgba(240,165,0,.06); }
+.ts-rank { font-weight:700; color:var(--dim); width:32px; }
+.ts-rank.gold { color:var(--gold); }
+.ts-name { font-weight:600; }
+.ts-team { font-size:.75rem; color:var(--dim); }
+.ts-num { font-weight:700; text-align:center; color:var(--text); }
+.ts-assist { color:var(--dim); }
+.prematch-subs-wrap { background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:14px; }
 .modal h2 { font-size: 1.2rem; margin-bottom: 16px; color: var(--gold); }
 .result-scoreline { text-align: center; margin: 16px 0; }
 .result-scoreline .teams-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--dim); margin-bottom: 6px; }
@@ -334,6 +349,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <button class="active" onclick="showTab('dashboard')">🏠 Dashboard</button>
     <button onclick="showTab('opstelling')">👥 Opstelling</button>
     <button onclick="showTab('transfers')">💸 Transfers</button>
+    <button onclick="showTab('topscorers')">🥇 Topscorers</button>
   </nav>
   <div class="content">
 
@@ -378,6 +394,12 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       </div>
     </div>
 
+    <!-- TAB: TOPSCORERS -->
+    <div id="tab-topscorers" class="tab">
+      <h2 style="font-size:1rem;margin-bottom:14px">🥇 Topscorers</h2>
+      <div id="topscorers-content"></div>
+    </div>
+
     <!-- TAB: TRANSFERS -->
     <div id="tab-transfers" class="tab">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -400,6 +422,32 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       <div class="tf-grid" id="sell-grid"></div>
     </div>
 
+  </div>
+</div>
+
+<!-- ══ MODAL: PRE-MATCH ══ -->
+<div class="modal-bg" id="modal-prematch">
+  <div class="modal modal-wide">
+    <h2>⚽ Opstelling — <span id="prematch-title"></span></h2>
+    <p style="font-size:.8rem;color:var(--dim);margin-bottom:12px">Klik twee spelers om te wisselen. Wijzigingen gelden <b>alleen voor deze wedstrijd</b>.</p>
+    <div class="pitch-wrap" style="margin-bottom:10px">
+      <div class="pitch" id="prematch-pitch"></div>
+    </div>
+    <div class="bench-wrap" style="margin-bottom:10px">
+      <h3>🪑 Bank</h3>
+      <div class="bench-row" id="prematch-bench"></div>
+    </div>
+    <div id="prematch-swap-hint" style="font-size:.82rem;color:var(--dim);margin-bottom:12px;min-height:18px"></div>
+    <div class="prematch-subs-wrap">
+      <h3 style="font-size:.85rem;margin-bottom:8px">🔄 Wissels tijdens wedstrijd (max 5 — computer voert uit in 2e helft)</h3>
+      <div id="prematch-sub-rows"></div>
+      <button class="btn-sub-add" id="prematch-add-sub" onclick="addPreMatchSub()">+ Wissel toevoegen</button>
+    </div>
+    <div class="modal-footer" style="gap:10px;flex-wrap:wrap">
+      <button class="btn-secondary" onclick="saveAsDefault()">💾 Sla op als standaard</button>
+      <button class="btn-secondary" onclick="closePreMatch()">✕ Annuleren</button>
+      <button class="btn-primary" onclick="confirmAndPlay()">▶ SPEEL WEDSTRIJD</button>
+    </div>
   </div>
 </div>
 
@@ -843,7 +891,9 @@ function startGame(teamIdx) {
     season: 1,
     results: [],
     market:      generateMarket(),
-    plannedSubs: [],
+    plannedSubs: [], // [{outIdx, benchIdx}] max 5
+    matchLineup: null,
+    topScorers:  {},
   };
 
   // Topbar
@@ -993,6 +1043,12 @@ function applyGrowth(myTeam, goalsAgainst) {
 
 function playNextMatch() {
   if (G.round >= G.totalRounds) { showSeasonEnd(); return; }
+
+  const myTeam = G.teams.find(t => t.name === G.myName);
+  if (G.matchLineup) {
+    myTeam.starters = G.matchLineup.starters;
+    myTeam.bench    = G.matchLineup.bench;
+  }
   G.round++;
   const roundMatches = G.schedule[G.round - 1];
   let myResult = null;
@@ -1027,6 +1083,18 @@ function playNextMatch() {
       });
     }
 
+    const updateScorers = (evts, teamName) => {
+      evts.filter(e => e.type==='goal').forEach(e => {
+        if (!G.topScorers[e.scorer]) G.topScorers[e.scorer]={goals:0,assists:0,team:teamName};
+        G.topScorers[e.scorer].goals++;
+        if (e.assist) {
+          if (!G.topScorers[e.assist]) G.topScorers[e.assist]={goals:0,assists:0,team:teamName};
+          G.topScorers[e.assist].assists++;
+        }
+      });
+    };
+    updateScorers(homeEvents, m.home);
+    updateScorers(awayEvents, m.away);
     applyResult(homeTeam, awayTeam, homeGoals, awayGoals);
     applyFitness(homeTeam, homeTeam.name===G.myName);
     applyFitness(awayTeam, awayTeam.name===G.myName);
@@ -1284,7 +1352,7 @@ function renderNextMatch() {
       </div>
     </div>
     <p class="home-away">Je speelt <b>${isHome ? 'thuis' : 'uit'}</b> tegen ${oppName}</p>
-    <button class="play-btn" onclick="playNextMatch()">▶ SPEEL WEDSTRIJD</button>`;
+    <button class="play-btn" onclick="openPreMatch()">📋 OPSTELLING & SPEEL</button>`;
 }
 
 function renderStandings() {
@@ -1566,6 +1634,8 @@ function newSeason() {
   G.round = 0;
   G.results = [];
   G.plannedSubs = [];
+  G.matchLineup = null;
+  G.topScorers  = {};
 
   G.teams.forEach(t => {
     t.points = 0; t.wins = 0; t.draws = 0; t.losses = 0;
@@ -1618,10 +1688,11 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   document.querySelectorAll('nav button').forEach((b,i) => {
-    b.classList.toggle('active', ['dashboard','opstelling','transfers'][i] === name);
+    b.classList.toggle('active', ['dashboard','opstelling','transfers','topscorers'][i] === name);
   });
   if (name === 'opstelling') renderOpsteliling();
   if (name === 'transfers')  renderTransfers();
+  if (name === 'topscorers')  renderTopScorers();
 }
 
 function toast(msg) {
@@ -1633,6 +1704,182 @@ function toast(msg) {
 }
 
 // ══════════════════════════════════════════════════
+
+// ══ PRE-MATCH OPSTELLING ══
+
+let preMatchSelected = null;
+
+function openPreMatch() {
+  const myTeam = G.teams.find(t => t.name === G.myName);
+  G.matchLineup = {
+    starters: myTeam.starters.map(p => ({...p})),
+    bench:    myTeam.bench.map(p => ({...p})),
+  };
+  preMatchSelected = null;
+  const next = G.schedule[G.round];
+  const opp = next.home === G.myName ? next.away : next.home;
+  document.getElementById('prematch-title').textContent = opp;
+  renderPreMatch();
+  renderPreMatchSubs();
+  document.getElementById('modal-prematch').classList.add('open');
+}
+
+function renderPreMatch() {
+  const starters = G.matchLineup.starters;
+  const bench    = G.matchLineup.bench;
+
+  // Pitch - gebruik dezelfde positie-layout als renderOpsteliling
+  const pitch = document.getElementById('prematch-pitch');
+  const rows = [
+    starters.slice(0, 1),   // GK
+    starters.slice(1, 5),   // DEF
+    starters.slice(5, 8),   // MID
+    starters.slice(8, 11),  // ATT
+  ];
+  pitch.innerHTML = rows.map((row, ri) =>
+    '<div class="row">' + row.map((p, ci) => {
+      const absIdx = [0, 1, 5, 8][ri] + ci;
+      const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === absIdx;
+      return '<div class="player-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer('pitch',' + absIdx + ')">' +
+             '<span class="pos-badge">' + (p.pos || '') + '</span>' +
+             '<span class="pname">' + p.name + '</span>' +
+             '<span class="prat">' + p.rating + '</span></div>';
+    }).join('') + '</div>'
+  ).join('');
+
+  // Bank
+  const benchEl = document.getElementById('prematch-bench');
+  benchEl.innerHTML = bench.map((p, i) => {
+    const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === i;
+    return '<div class="player-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer('bench',' + i + ')">' +
+           '<span class="pos-badge">' + (p.pos || '') + '</span>' +
+           '<span class="pname">' + p.name + '</span>' +
+           '<span class="prat">' + p.rating + '</span></div>';
+  }).join('');
+}
+
+function selectPreMatchPlayer(from, idx) {
+  if (!preMatchSelected) {
+    preMatchSelected = { from, idx };
+    const name = from === 'pitch' ? G.matchLineup.starters[idx].name : G.matchLineup.bench[idx].name;
+    document.getElementById('prematch-swap-hint').textContent = name + ' geselecteerd — klik een andere speler om te wisselen';
+    renderPreMatch();
+    return;
+  }
+  if (preMatchSelected.from === from && preMatchSelected.idx === idx) {
+    preMatchSelected = null;
+    document.getElementById('prematch-swap-hint').textContent = '';
+    renderPreMatch();
+    return;
+  }
+
+  // Wissel uitvoeren
+  const s = G.matchLineup.starters;
+  const b = G.matchLineup.bench;
+  if (preMatchSelected.from === 'pitch' && from === 'pitch') {
+    [s[preMatchSelected.idx], s[idx]] = [s[idx], s[preMatchSelected.idx]];
+  } else if (preMatchSelected.from === 'bench' && from === 'bench') {
+    [b[preMatchSelected.idx], b[idx]] = [b[idx], b[preMatchSelected.idx]];
+  } else {
+    const si = preMatchSelected.from === 'pitch' ? preMatchSelected.idx : idx;
+    const bi = preMatchSelected.from === 'bench' ? preMatchSelected.idx : idx;
+    const tmp = s[si];
+    s[si] = b[bi];
+    b[bi] = tmp;
+  }
+  preMatchSelected = null;
+  document.getElementById('prematch-swap-hint').textContent = '';
+  renderPreMatch();
+}
+
+function renderPreMatchSubs() {
+  const el = document.getElementById('prematch-sub-rows');
+  const starters = G.matchLineup ? G.matchLineup.starters : [];
+  const bench    = G.matchLineup ? G.matchLineup.bench    : [];
+  if (!G.plannedSubs || G.plannedSubs.length === 0) {
+    el.innerHTML = '<p style="font-size:.8rem;color:var(--dim);margin:0 0 8px">Geen wissels gepland.</p>';
+  } else {
+    el.innerHTML = G.plannedSubs.map((sub, i) => {
+      const outName   = starters[sub.outIdx]  ? starters[sub.outIdx].name  : '?';
+      const benchName = bench[sub.benchIdx]   ? bench[sub.benchIdx].name   : '?';
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem">' +
+             '<span>' + outName + '</span><span style="color:var(--dim)">→</span><span>' + benchName + '</span>' +
+             '<button onclick="removePreMatchSub(' + i + ')" style="margin-left:auto;background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem">✕</button>' +
+             '</div>';
+    }).join('');
+  }
+  const addBtn = document.getElementById('prematch-add-sub');
+  if (addBtn) addBtn.style.display = G.plannedSubs.length >= 5 ? 'none' : '';
+}
+
+function addPreMatchSub() {
+  const starters = G.matchLineup ? G.matchLineup.starters.slice(1) : []; // exclude GK
+  const bench    = G.matchLineup ? G.matchLineup.bench    : [];
+  if (!starters.length || !bench.length) return;
+  const outName   = prompt('Welke speler eraf? (' + starters.map(p => p.name).join(', ') + ')');
+  if (!outName) return;
+  const outIdx = G.matchLineup.starters.findIndex(p => p.name.toLowerCase() === outName.toLowerCase());
+  if (outIdx < 1) return alert('Speler niet gevonden in basis.');
+  const inName = prompt('Welke bankspeler erin? (' + bench.map(p => p.name).join(', ') + ')');
+  if (!inName) return;
+  const benchIdx = bench.findIndex(p => p.name.toLowerCase() === inName.toLowerCase());
+  if (benchIdx < 0) return alert('Bankspeler niet gevonden.');
+  if (!G.plannedSubs) G.plannedSubs = [];
+  G.plannedSubs.push({ outIdx, benchIdx });
+  renderPreMatchSubs();
+}
+
+function removePreMatchSub(i) {
+  G.plannedSubs.splice(i, 1);
+  renderPreMatchSubs();
+}
+
+function saveAsDefault() {
+  const myTeam = G.teams.find(t => t.name === G.myName);
+  myTeam.starters = G.matchLineup.starters.map(p => ({...p}));
+  myTeam.bench    = G.matchLineup.bench.map(p => ({...p}));
+  saveGame();
+  toast('Opstelling opgeslagen als standaard');
+}
+
+function closePreMatch() {
+  G.matchLineup = null;
+  preMatchSelected = null;
+  document.getElementById('modal-prematch').classList.remove('open');
+}
+
+function confirmAndPlay() {
+  document.getElementById('modal-prematch').classList.remove('open');
+  playNextMatch();
+}
+
+// ══ TOPSCORERS ══
+
+function renderTopScorers() {
+  const el = document.getElementById('topscorers-content');
+  if (!G.topScorers || Object.keys(G.topScorers).length === 0) {
+    el.innerHTML = '<p style="color:var(--dim);font-size:.9rem">Nog geen wedstrijden gespeeld.</p>';
+    return;
+  }
+  const sorted = Object.entries(G.topScorers)
+    .sort((a, b) => b[1].goals - a[1].goals || b[1].assists - a[1].assists)
+    .slice(0, 30);
+  const myTeam = G.myName;
+  el.innerHTML = '<table class="ts-table"><thead><tr>' +
+    '<th class="ts-rank">#</th><th>Speler</th><th style="text-align:center">⚽</th><th style="text-align:center">🎯</th></tr></thead><tbody>' +
+    sorted.map(([name, s], i) => {
+      const isMe = s.team === myTeam;
+      const rankClass = i === 0 ? 'ts-rank gold' : 'ts-rank';
+      return '<tr class="' + (isMe ? 'me' : '') + '">' +
+        '<td class="' + rankClass + '">' + (i + 1) + '</td>' +
+        '<td><div class="ts-name">' + name + (isMe ? ' ⭐' : '') + '</div><div class="ts-team">' + s.team + '</div></td>' +
+        '<td class="ts-num">' + s.goals + '</td>' +
+        '<td class="ts-num ts-assist">' + s.assists + '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table>';
+}
+
 //  BOOT — login scherm wordt als eerste getoond
 //  Na login roept handleLogin() → launchGame() → loadEredivisieData()
 // ══════════════════════════════════════════════════
