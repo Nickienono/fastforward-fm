@@ -595,6 +595,7 @@ async function handleLogin() {
     if (!res.ok) return showLoginErr(data.error || 'Er ging iets mis.');
 
     CURRENT_USER = { username: data.username, tag: data.tag };
+    localStorage.setItem('ffm_user', JSON.stringify(CURRENT_USER));
 
     if (data.isNew) {
       // Nieuw account → toon gegenereerde tag
@@ -1883,7 +1884,36 @@ function renderTopScorers() {
 //  BOOT — login scherm wordt als eerste getoond
 //  Na login roept handleLogin() → launchGame() → loadEredivisieData()
 // ══════════════════════════════════════════════════
-// (geen auto-start — wacht op login)
+// Auto-login als er een opgeslagen sessie is
+(async function tryAutoLogin() {
+  const saved = localStorage.getItem('ffm_user');
+  if (!saved) return;
+  try {
+    const { username, tag } = JSON.parse(saved);
+    if (!username || !tag) return;
+    // Vul de velden alvast in
+    document.getElementById('inp-username').value = username;
+    document.getElementById('inp-tag').value = tag;
+    // Probeer direct in te loggen
+    setLoginBusy(true);
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, tag }),
+    });
+    const data = await res.json();
+    setLoginBusy(false);
+    if (!res.ok) {
+      // Auto-login mislukt — laat gebruiker handmatig inloggen
+      return;
+    }
+    CURRENT_USER = { username: data.username, tag: data.tag };
+    localStorage.setItem('ffm_user', JSON.stringify(CURRENT_USER));
+    await launchGame(data.hasSave);
+  } catch(e) {
+    setLoginBusy(false);
+  }
+})();
 </script>
 </body>
 </html>
