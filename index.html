@@ -1454,7 +1454,7 @@ function renderTransfers() {
       +'<div class="tf-meta">'+p.pos+' · OVR '+p.rating+' · '+p.fitness+'% fit</div>'
       +'<span class="tf-club-tag">🏟 '+p.teamName+'</span></div>'
       +'<div class="tf-rating">'+p.rating+'</div>'
-      +'<button class="btn-buy" onclick="openNegotiation('+p.id+',''+p.teamName+'')">Onderhandelen</button></div>'
+      +'<button class="btn-buy" data-pid="'+p.id+'" data-team="'+p.teamName+'" onclick="openNegotiation(+this.dataset.pid,this.dataset.team)">Onderhandelen</button></div>'
     ).join('') || '<p style="color:var(--dim);font-size:.85rem">Geen spelers.</p>';
   }
 
