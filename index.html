@@ -196,7 +196,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 /* ── MODAL ── */
 .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
 .modal-bg.open { display: flex; }
-.modal { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 460px; width: 100%; }
+.modal { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 460px; width: 100%; max-height: 88vh; overflow-y: auto; }
 .modal h2 { font-size: 1.2rem; margin-bottom: 16px; color: var(--gold); }
 .result-scoreline { text-align: center; margin: 16px 0; }
 .result-scoreline .teams-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--dim); margin-bottom: 6px; }
@@ -220,6 +220,41 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 /* Toast */
 #toast { position: fixed; bottom: 20px; right: 20px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 10px 18px; border-radius: 8px; font-size: 0.84rem; transform: translateY(60px); opacity: 0; transition: all .25s; z-index: 99; max-width: 300px; }
 #toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── WISSELPLAN ── */
+.sub-plan-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+.sub-plan-wrap h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 10px; }
+.sub-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(48,54,61,.4); font-size: 0.82rem; }
+.sub-row:last-child { border-bottom: none; }
+.sub-row select { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 4px 6px; border-radius: 6px; font-size: 0.78rem; flex: 1; }
+.sub-arrow { color: var(--gold); font-weight: 700; }
+.btn-sub-add { background: var(--panel2); border: 1px dashed var(--border); color: var(--dim); border-radius: 8px; padding: 8px; cursor: pointer; font-size: 0.8rem; width: 100%; margin-top: 8px; transition: all .15s; }
+.btn-sub-add:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sub-add:disabled { opacity: .4; cursor: not-allowed; }
+.btn-sub-rm { background: none; border: none; color: var(--red); cursor: pointer; font-size: 1rem; padding: 0 4px; line-height: 1; }
+
+/* ── MATCH REPORT ── */
+.match-report { margin: 10px 0; }
+.report-half { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin: 10px 0 6px; font-weight: 700; }
+.event-row { display: flex; align-items: flex-start; gap: 8px; font-size: 0.82rem; padding: 3px 0; }
+.event-min { color: var(--dim); min-width: 34px; font-size: 0.75rem; padding-top: 1px; }
+.event-icon { width: 20px; text-align: center; }
+.event-text { flex: 1; line-height: 1.4; }
+.event-assist { color: var(--dim); font-size: 0.76rem; }
+.report-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+/* ── NEGOTIATE MODAL ── */
+.neg-info { display: flex; justify-content: space-between; align-items: flex-start; margin: 12px 0; }
+.neg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.neg-card { background: var(--panel2); border-radius: 8px; padding: 12px 10px; text-align: center; cursor: pointer; border: 1.5px solid var(--border); transition: all .15s; }
+.neg-card:hover:not(:disabled) { border-color: var(--gold); transform: translateY(-1px); }
+.neg-card .neg-pct { font-size: 1.1rem; font-weight: 800; color: var(--gold); }
+.neg-card .neg-price { font-size: 0.82rem; margin-top: 3px; }
+.neg-card .neg-chance { font-size: 0.7rem; color: var(--dim); margin-top: 4px; }
+.neg-card.green-border { border-color: var(--green) !important; }
+.neg-budget-warn { color: var(--red); font-size: 0.78rem; text-align: center; margin-top: 6px; }
+.tf-club-tag { font-size: 0.7rem; background: var(--panel2); border-radius: 4px; padding: 2px 6px; color: var(--dim); }
+.scout-section { margin-top: 20px; }
 </style>
 </head>
 <body>
@@ -336,6 +371,11 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <h3>🪑 Wisselbank</h3>
         <div class="bench-row" id="bench-row"></div>
       </div>
+      <div class="sub-plan-wrap">
+        <h3>🔄 Wisselplan — max 5 wissels (computer wisselt in 2e helft)</h3>
+        <div id="sub-plan-rows"></div>
+        <button class="btn-sub-add" id="btn-add-sub" onclick="addPlannedSub()">+ Wissel toevoegen</button>
+      </div>
     </div>
 
     <!-- TAB: TRANSFERS -->
@@ -352,6 +392,10 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         </select>
       </div>
       <div class="tf-grid" id="market-grid"></div>
+      <div style="margin-top:20px">
+        <div class="section-title">🔍 Andere Clubs – Scout & Koop</div>
+        <div class="tf-grid" id="scout-grid"></div>
+      </div>
       <div class="section-title">Jouw Selectie – Verkopen</div>
       <div class="tf-grid" id="sell-grid"></div>
     </div>
@@ -378,6 +422,30 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       <h2 id="season-title"></h2>
       <p id="season-desc"></p>
       <button class="btn-primary" onclick="newSeason()">Nieuw Seizoen →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NEGOTIATE ══ -->
+<div class="modal-bg" id="modal-negotiate">
+  <div class="modal">
+    <h2>💬 Onderhandelingen</h2>
+    <div class="neg-info">
+      <div>
+        <div id="neg-name" style="font-weight:700;font-size:1rem"></div>
+        <div id="neg-meta" style="color:var(--dim);font-size:.84rem;margin-top:2px"></div>
+        <div id="neg-club-tag" style="margin-top:5px"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:var(--dim);font-size:.75rem;text-transform:uppercase;letter-spacing:.5px">Vraagprijs</div>
+        <div id="neg-price" style="font-size:1.2rem;font-weight:800;color:var(--gold);margin-top:2px"></div>
+      </div>
+    </div>
+    <div style="color:var(--dim);font-size:.8rem;margin-bottom:4px">Kies je bod:</div>
+    <div class="neg-grid" id="neg-grid"></div>
+    <div id="neg-warn" class="neg-budget-warn" style="display:none"></div>
+    <div class="modal-footer" style="justify-content:flex-start;margin-top:10px">
+      <button class="btn-newgame" onclick="closeNegotiation()">✕ Annuleren</button>
     </div>
   </div>
 </div>
@@ -435,7 +503,7 @@ const NAME_SHORT = {
 };
 
 const FORMATION  = [['K'],['V','V','V','V'],['M','M','M'],['A','A','A']];
-const BENCH_POS  = ['K','V','V','M','M','A','A'];
+const BENCH_POS  = ['K','V','V','V','M','M','M','A','A']; // 9 wisselspelers
 
 // ══════════════════════════════════════════════════
 //  STATE
@@ -529,8 +597,10 @@ async function saveGame() {
     });
   } catch (e) { console.warn('Auto-save mislukt:', e); }
 }
-let selectedPlayer = null;
-let _pid          = 100000;
+let selectedPlayer    = null;
+let _pid              = 100000;
+let NEGOTIATE_PID     = null;
+let NEGOTIATE_FROM_TEAM = null;
 
 // ══════════════════════════════════════════════════
 //  HELPERS
@@ -705,16 +775,19 @@ function buildSquad(teamData) {
   const take = (pos, n) => {
     const result = [];
     while (result.length < n) {
-      result.push(perPos[pos].length > 0
+      const p = perPos[pos].length > 0
         ? perPos[pos].shift()
-        : makeFallbackPlayer(pos, teamData.tier));
+        : makeFallbackPlayer(pos, teamData.tier);
+      p.baseRating   = p.baseRating   || p.rating;
+      p.growthPoints = p.growthPoints || 0;
+      result.push(p);
     }
     return result;
   };
 
   return {
     starters: [...take('K',1), ...take('V',4), ...take('M',3), ...take('A',3)],
-    bench:    [...take('K',1), ...take('V',2), ...take('M',2), ...take('A',2)],
+    bench:    [...take('K',1), ...take('V',3), ...take('M',3), ...take('A',2)],
   };
 }
 
@@ -769,7 +842,8 @@ function startGame(teamIdx) {
     round:  0,
     season: 1,
     results: [],
-    market: generateMarket(),
+    market:      generateMarket(),
+    plannedSubs: [],
   };
 
   // Topbar
@@ -859,12 +933,66 @@ function applyFitness(team, isMyTeam) {
 }
 
 // ══════════════════════════════════════════════════
+//  MATCH EVENTS
+// ══════════════════════════════════════════════════
+
+function generateMatchEvents(team, goalsScored) {
+  const events = [];
+  const starters = team.starters;
+  starters.forEach(p => { p._matchGoals = p._matchGoals||0; p._matchAssists = p._matchAssists||0; p._played = true; });
+  const scorerPool = [
+    ...starters.filter(p => p.pos==='A'),
+    ...starters.filter(p => p.pos==='A'),
+    ...starters.filter(p => p.pos==='M'),
+  ];
+  const fallback = starters.filter(p => p.pos!=='K');
+  const goalMins = Array.from({length: goalsScored}, () => ri(1,90)).sort((a,b)=>a-b);
+  goalMins.forEach(min => {
+    const pool = scorerPool.length ? scorerPool : fallback;
+    const scorer = pool[ri(0, pool.length-1)];
+    const possAst = starters.filter(p => p.id!==scorer.id && p.pos!=='K');
+    const assist  = possAst.length && Math.random()<0.72 ? possAst[ri(0,possAst.length-1)] : null;
+    scorer._matchGoals++;
+    if (assist) assist._matchAssists++;
+    events.push({ type:'goal', scorer:scorer.name, assist:assist?.name||null, minute:min });
+  });
+  const nYellow = ri(1,3);
+  const yCands = [...starters];
+  for (let i=0; i<Math.min(nYellow,yCands.length); i++) {
+    const idx = ri(0,yCands.length-1);
+    events.push({ type:'yellow', player:yCands.splice(idx,1)[0].name, minute:ri(15,89) });
+  }
+  if (Math.random()<0.08) {
+    events.push({ type:'red', player:starters[ri(0,starters.length-1)].name, minute:ri(35,90) });
+  }
+  return events.sort((a,b)=>a.minute-b.minute);
+}
+
+function applyGrowth(myTeam, goalsAgainst) {
+  const cleanSheet = goalsAgainst===0;
+  myTeam.starters.filter(p=>p._played).forEach(p => {
+    const goals=p._matchGoals||0, assists=p._matchAssists||0;
+    let g=0;
+    if      (p.pos==='A') { g+=goals*0.35; g+=assists*0.12; }
+    else if (p.pos==='M') { g+=goals*0.15; g+=assists*0.10; g+=cleanSheet?0.08:0; }
+    else if (p.pos==='V') { g+=goals*0.10; g+=cleanSheet?0.28:0; }
+    else if (p.pos==='K') { g+=cleanSheet?0.40:0; }
+    g=Math.min(g,1.0);
+    p.growthPoints=(p.growthPoints||0)+g;
+    if (p.growthPoints>=1.0) {
+      const cap=Math.min(99,(p.baseRating||p.rating)+10);
+      if (p.rating<cap) { p.rating++; p.value=calcValue(p.rating); p._justGrew=true; }
+      p.growthPoints-=1.0;
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════
 //  PLAY MATCH
 // ══════════════════════════════════════════════════
 
 function playNextMatch() {
   if (G.round >= G.totalRounds) { showSeasonEnd(); return; }
-
   G.round++;
   const roundMatches = G.schedule[G.round - 1];
   let myResult = null;
@@ -872,29 +1000,53 @@ function playNextMatch() {
   roundMatches.forEach(m => {
     const homeTeam = G.teams.find(t => t.name === m.home);
     const awayTeam = G.teams.find(t => t.name === m.away);
-    const { homeGoals, awayGoals } = simulateMatch(homeTeam, awayTeam);
-    applyResult(homeTeam, awayTeam, homeGoals, awayGoals);
-    applyFitness(homeTeam, homeTeam.name === G.myName);
-    applyFitness(awayTeam, awayTeam.name === G.myName);
+    const isMyMatch = homeTeam.name===G.myName || awayTeam.name===G.myName;
+    [...homeTeam.starters,...homeTeam.bench].forEach(p=>{p._matchGoals=0;p._matchAssists=0;p._played=false;p._justGrew=false;});
+    [...awayTeam.starters,...awayTeam.bench].forEach(p=>{p._matchGoals=0;p._matchAssists=0;p._played=false;p._justGrew=false;});
 
-    if (homeTeam.name === G.myName || awayTeam.name === G.myName) {
-      const isHome  = homeTeam.name === G.myName;
-      const myG     = isHome ? homeGoals : awayGoals;
-      const oppG    = isHome ? awayGoals : homeGoals;
-      const opp     = isHome ? awayTeam  : homeTeam;
-      const outcome = myG > oppG ? 'win' : myG < oppG ? 'loss' : 'draw';
-      myResult = { isHome, opponent: opp.name, myGoals: myG, oppGoals: oppG,
-                   homeGoals, awayGoals, homeName: m.home, awayName: m.away, outcome };
+    const { homeGoals, awayGoals } = simulateMatch(homeTeam, awayTeam);
+    const homeEvents = generateMatchEvents(homeTeam, homeGoals);
+    const awayEvents = generateMatchEvents(awayTeam, awayGoals);
+
+    const myTeam   = G.teams.find(t => t.name===G.myName);
+    const isMyHome = homeTeam.name===G.myName;
+    let subEvents  = [];
+
+    if (isMyMatch) {
+      const activeTeam = isMyHome ? homeTeam : awayTeam;
+      (G.plannedSubs||[]).slice(0,5).forEach((sub,i) => {
+        const outP=activeTeam.starters[sub.outIdx], inP=activeTeam.bench[sub.benchIdx];
+        if (!outP||!inP) return;
+        const minute=ri(55+i*6,85+i*2);
+        subEvents.push({type:'sub',playerIn:inP.name,playerOut:outP.name,minute});
+        inP._played=true;
+        outP.fitness=clamp(outP.fitness+ri(10,18),0,100);
+        inP.fitness=clamp(inP.fitness-ri(4,8),0,100);
+        activeTeam.starters[sub.outIdx]=inP;
+        activeTeam.bench[sub.benchIdx]=outP;
+      });
+    }
+
+    applyResult(homeTeam, awayTeam, homeGoals, awayGoals);
+    applyFitness(homeTeam, homeTeam.name===G.myName);
+    applyFitness(awayTeam, awayTeam.name===G.myName);
+
+    if (isMyMatch) {
+      const isHome=isMyHome, myG=isHome?homeGoals:awayGoals, oppG=isHome?awayGoals:homeGoals;
+      const opp=isHome?awayTeam:homeTeam, outcome=myG>oppG?'win':myG<oppG?'loss':'draw';
+      applyGrowth(myTeam, oppG);
+      const myEv=(isHome?[...homeEvents,...subEvents]:[...awayEvents,...subEvents]).sort((a,b)=>a.minute-b.minute);
+      myResult={isHome,opponent:opp.name,myGoals:myG,oppGoals:oppG,homeGoals,awayGoals,homeName:m.home,awayName:m.away,outcome,
+        myEvents:myEv, oppEvents:isHome?awayEvents:homeEvents, myName:G.myName, oppName:opp.name,
+        grownPlayers:myTeam.starters.filter(p=>p._justGrew).map(p=>p.name)};
       G.results.push(myResult);
-      const myTeam = G.teams.find(t => t.name === G.myName);
-      myTeam.budget += outcome==='win' ? 200000 : outcome==='draw' ? 80000 : 0;
+      myTeam.budget+=outcome==='win'?200000:outcome==='draw'?80000:0;
     }
   });
 
-  renderAll();
-  saveGame(); // auto-save na elke wedstrijd
+  renderAll(); saveGame();
   if (myResult) showResult(myResult);
-  if (G.round >= G.totalRounds && !myResult) showSeasonEnd();
+  if (G.round>=G.totalRounds && !myResult) showSeasonEnd();
 }
 
 // ══════════════════════════════════════════════════
@@ -919,19 +1071,7 @@ function refreshMarket() {
   toast('Markt ververst.');
 }
 
-function buyPlayer(pid) {
-  const idx = G.market.findIndex(p => p.id === pid);
-  if (idx < 0) return;
-  const p = G.market[idx];
-  const myTeam = G.teams.find(t => t.name === G.myName);
-  if (myTeam.budget < p.value) { toast('Onvoldoende budget!'); return; }
-  myTeam.budget -= p.value;
-  myTeam.bench.push({ ...p });
-  G.market.splice(idx, 1);
-  renderAll();
-  saveGame();
-  toast(`${p.name} gekocht!`);
-}
+function buyPlayer(pid) { openNegotiation(pid, null); }
 
 function sellPlayer(pid) {
   const myTeam = G.teams.find(t => t.name === G.myName);
@@ -1002,6 +1142,79 @@ function selectBenchPlayer(idx) {
     selectedPlayer = { from: 'bench', idx };
   }
   renderOpsteliling();
+}
+
+// ══════════════════════════════════════════════════
+//  ONDERHANDELING
+// ══════════════════════════════════════════════════
+
+function openNegotiation(pid, fromTeamName) {
+  const myTeam = G.teams.find(t => t.name===G.myName);
+  let player = null;
+  if (!fromTeamName) {
+    player = G.market.find(p => p.id===pid);
+  } else {
+    const team = G.teams.find(t => t.name===fromTeamName);
+    if (team) player = [...team.starters,...team.bench].find(p => p.id===pid);
+    if (player) player = {...player, teamName: fromTeamName};
+  }
+  if (!player) return;
+  NEGOTIATE_PID = pid; NEGOTIATE_FROM_TEAM = fromTeamName;
+  const askingPrice = fromTeamName ? Math.round(player.value*1.25) : player.value;
+  document.getElementById('neg-name').textContent = player.name;
+  document.getElementById('neg-meta').textContent = player.pos+' · OVR '+player.rating+' · '+player.fitness+'% fit';
+  document.getElementById('neg-club-tag').innerHTML = fromTeamName
+    ? '<span class="tf-club-tag">🏟 '+fromTeamName+'</span>'
+    : '<span class="tf-club-tag">Vrije agent</span>';
+  document.getElementById('neg-price').textContent = fmtMoney(askingPrice);
+  const opts=[{pct:70,label:'Laag bod',chance:'~20%'},{pct:85,label:'Redelijk',chance:'~55%'},{pct:100,label:'Vraagprijs',chance:'~90%'},{pct:120,label:'Overbieden',chance:'✓ Zeker!'}];
+  document.getElementById('neg-grid').innerHTML = opts.map(o => {
+    const amt=Math.round(askingPrice*o.pct/100);
+    const ok=myTeam.budget>=amt;
+    return '<div class="neg-card'+(o.pct===100?' green-border':'')+'" onclick="makeOffer('+o.pct/100+','+askingPrice+')" style="'+(ok?'':'opacity:.4;pointer-events:none')+'">'
+      +'<div class="neg-pct">'+o.pct+'%</div><div class="neg-price">'+fmtMoney(amt)+'</div>'
+      +'<div class="neg-chance">'+o.label+'</div><div class="neg-chance">'+o.chance+'</div></div>';
+  }).join('');
+  const warn=document.getElementById('neg-warn');
+  if (myTeam.budget<Math.round(askingPrice*0.70)){warn.textContent='⚠ Budget onvoldoende voor elk bod.';warn.style.display='block';}
+  else warn.style.display='none';
+  document.getElementById('modal-negotiate').classList.add('open');
+}
+
+function closeNegotiation() {
+  document.getElementById('modal-negotiate').classList.remove('open');
+  NEGOTIATE_PID=null; NEGOTIATE_FROM_TEAM=null;
+}
+
+function makeOffer(factor, askingPrice) {
+  const myTeam=G.teams.find(t=>t.name===G.myName);
+  const offer=Math.round(askingPrice*factor);
+  if (myTeam.budget<offer){toast('Onvoldoende budget!');return;}
+  const pid=NEGOTIATE_PID, fromT=NEGOTIATE_FROM_TEAM;
+  let sc=factor>=1.20?0.98:factor>=1.00?0.90:factor>=0.85?0.55:0.20;
+  closeNegotiation();
+  if (Math.random()<sc) {
+    let player=null;
+    if (!fromT) {
+      const idx=G.market.findIndex(p=>p.id===pid);
+      if (idx>=0){player={...G.market[idx]};G.market.splice(idx,1);}
+    } else {
+      const team=G.teams.find(t=>t.name===fromT);
+      if (team){
+        let si=team.starters.findIndex(p=>p.id===pid);
+        if (si>=0){player={...team.starters[si]};team.starters.splice(si,1);}
+        else{let bi=team.bench.findIndex(p=>p.id===pid);if(bi>=0){player={...team.bench[bi]};team.bench.splice(bi,1);}}
+      }
+    }
+    if (player){
+      myTeam.budget-=offer;
+      player.club=G.myName; player.baseRating=player.baseRating||player.rating;
+      myTeam.bench.push(player); renderAll(); saveGame();
+      toast('✅ '+player.name+' gekocht voor '+fmtMoney(offer)+'!');
+    }
+  } else {
+    toast('❌ Bod afgewezen! Probeer een hoger bod.');
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -1157,6 +1370,55 @@ function renderOpsteliling() {
     ? '✅ Geselecteerd — klik een andere speler om te wisselen'
     : 'Klik twee spelers om te wisselen';
   hintEl.style.color = selectedPlayer ? 'var(--gold)' : 'var(--dim)';
+  renderSubPlan();
+}
+
+function renderSubPlan() {
+  const myTeam=G.teams.find(t=>t.name===G.myName);
+  const subs=G.plannedSubs||[];
+  const rowsEl=document.getElementById('sub-plan-rows');
+  if (!rowsEl) return;
+  if (!subs.length) {
+    rowsEl.innerHTML='<div style="color:var(--dim);font-size:.82rem;padding:4px 0 8px">Nog geen wissels gepland.</div>';
+  } else {
+    rowsEl.innerHTML=subs.map((s,i)=>{
+      const outP=myTeam.starters[s.outIdx], inP=myTeam.bench[s.benchIdx];
+      if (!outP||!inP) return '';
+      return '<div class="sub-row">'
+        +'<span class="sub-badge" style="border:1px solid var(--red)">'+outP.name.split(' ').pop()+' ('+outP.pos+')</span>'
+        +'<span class="sub-arrow">→</span>'
+        +'<span class="sub-badge" style="border:1px solid var(--green)">'+inP.name.split(' ').pop()+' ('+inP.pos+')</span>'
+        +'<button class="btn-sub-rm" onclick="removePlannedSub('+i+')">✕</button></div>';
+    }).join('');
+  }
+  const addBtn=document.getElementById('btn-add-sub');
+  if (addBtn) addBtn.disabled=subs.length>=5;
+}
+
+function addPlannedSub() {
+  const myTeam=G.teams.find(t=>t.name===G.myName);
+  const subs=G.plannedSubs||[];
+  if (subs.length>=5){toast('Maximaal 5 wissels!');return;}
+  const usedOut=new Set(subs.map(s=>s.outIdx));
+  const usedIn=new Set(subs.map(s=>s.benchIdx));
+  const starterOpts=myTeam.starters.map((p,i)=>(i+1)+'. '+p.name+' ('+p.pos+', OVR'+p.rating+')').join('\n');
+  const benchOpts=myTeam.bench.map((p,i)=>(i+1)+'. '+p.name+' ('+p.pos+', OVR'+p.rating+')').join('\n');
+  const outChoice=prompt('Welke starter gaat eraf? (1-'+myTeam.starters.length+')\n\n'+starterOpts);
+  if (!outChoice) return;
+  const oIdx=parseInt(outChoice)-1;
+  if (isNaN(oIdx)||oIdx<0||oIdx>=myTeam.starters.length){toast('Ongeldige keuze.');return;}
+  if (usedOut.has(oIdx)){toast('Al ingepland!');return;}
+  const inChoice=prompt('Wie komt erin? (1-'+myTeam.bench.length+')\n\n'+benchOpts);
+  if (!inChoice) return;
+  const bIdx=parseInt(inChoice)-1;
+  if (isNaN(bIdx)||bIdx<0||bIdx>=myTeam.bench.length){toast('Ongeldige keuze.');return;}
+  if (usedIn.has(bIdx)){toast('Al ingepland!');return;}
+  G.plannedSubs.push({outIdx:oIdx,benchIdx:bIdx});
+  renderSubPlan(); toast('Wissel toegevoegd!');
+}
+
+function removePlannedSub(i) {
+  G.plannedSubs.splice(i,1); renderSubPlan();
 }
 
 function renderTransfers() {
@@ -1169,15 +1431,32 @@ function renderTransfers() {
   );
 
   document.getElementById('market-grid').innerHTML = market.length
-    ? market.map(p => `<div class="tf-card">
-        <div>
-          <div class="tf-name">${p.name}</div>
-          <div class="tf-meta">${p.pos} · ${p.fitness}% fit · ${fmtMoney(p.value)}</div>
-        </div>
-        <div class="tf-rating">${p.rating}</div>
-        <button class="btn-buy" onclick="buyPlayer(${p.id})" ${myTeam.budget<p.value?'disabled':''}>Kopen</button>
-      </div>`).join('')
-    : '<p style="color:var(--dim);font-size:.85rem">Geen spelers gevonden.</p>';
+    ? market.map(p => '<div class="tf-card"><div><div class="tf-name">'+p.name+'</div>'
+        +'<div class="tf-meta">'+p.pos+' · '+p.fitness+'% fit · '+fmtMoney(p.value)+'</div>'
+        +'<div style="font-size:.7rem;color:var(--dim)">Vrije agent</div></div>'
+        +'<div class="tf-rating">'+p.rating+'</div>'
+        +'<button class="btn-buy" onclick="openNegotiation('+p.id+',null)">Onderhandelen</button></div>'
+      ).join('')
+    : '<p style="color:var(--dim);font-size:.85rem">Geen vrije agenten gevonden.</p>';
+
+  // Andere clubs scouten
+  const scoutEl = document.getElementById('scout-grid');
+  if (scoutEl) {
+    const otherTeams = G.teams.filter(t => t.name!==G.myName);
+    const scouts = [];
+    otherTeams.forEach(t => [...t.starters,...t.bench].forEach(p => {
+      if ((!search||p.name.toLowerCase().includes(search))&&(!posF||p.pos===posF))
+        scouts.push({...p,teamName:t.name});
+    }));
+    scouts.sort((a,b)=>b.rating-a.rating);
+    scoutEl.innerHTML = scouts.slice(0,20).map(p =>
+      '<div class="tf-card"><div><div class="tf-name">'+p.name+'</div>'
+      +'<div class="tf-meta">'+p.pos+' · OVR '+p.rating+' · '+p.fitness+'% fit</div>'
+      +'<span class="tf-club-tag">🏟 '+p.teamName+'</span></div>'
+      +'<div class="tf-rating">'+p.rating+'</div>'
+      +'<button class="btn-buy" onclick="openNegotiation('+p.id+',''+p.teamName+'')">Onderhandelen</button></div>'
+    ).join('') || '<p style="color:var(--dim);font-size:.85rem">Geen spelers.</p>';
+  }
 
   const squad = [...myTeam.starters, ...myTeam.bench]
     .filter(p => (!search||p.name.toLowerCase().includes(search)) && (!posF||p.pos===posF))
@@ -1205,27 +1484,47 @@ function renderTransfers() {
 //  RESULT MODAL
 // ══════════════════════════════════════════════════
 
-function showResult(r) {
-  const outcomeText = r.outcome==='win' ? '🎉 Gewonnen!' : r.outcome==='loss' ? '😞 Verloren' : '🤝 Gelijkspel';
-  const bonus  = r.outcome==='win' ? '+€200K' : r.outcome==='draw' ? '+€80K' : '–';
-  const myTeam = G.teams.find(t => t.name === G.myName);
-  const myOvr  = Math.round(avg(myTeam.starters.map(p => p.rating)));
+function renderEventList(events) {
+  if (!events||!events.length) return '<div style="color:var(--dim);font-size:.8rem;padding:4px 0">Geen noemenswaardige momenten.</div>';
+  return events.map(e => {
+    if (e.type==='goal') return '<div class="event-row"><span class="event-min">'+e.minute+"'</span>"
+      +'<span class="event-icon">⚽</span><span class="event-text"><strong>'+e.scorer+'</strong>'
+      +(e.assist?'<br><span class="event-assist">assist: '+e.assist+'</span>':'')+'</span></div>';
+    if (e.type==='yellow') return '<div class="event-row"><span class="event-min">'+e.minute+"'</span>"
+      +'<span class="event-icon">🟨</span><span class="event-text">'+e.player+'</span></div>';
+    if (e.type==='red') return '<div class="event-row"><span class="event-min">'+e.minute+"'</span>"
+      +'<span class="event-icon">🟥</span><span class="event-text">'+e.player+'</span></div>';
+    if (e.type==='sub') return '<div class="event-row"><span class="event-min">'+e.minute+"'</span>"
+      +'<span class="event-icon">🔄</span><span class="event-text">▲ '+e.playerIn+' / ▼ '+e.playerOut+'</span></div>';
+    return '';
+  }).join('');
+}
 
-  document.getElementById('result-content').innerHTML = `
-    <div class="result-scoreline">
-      <div class="teams-row">
-        <span>${r.homeName}${r.homeName===G.myName?' (jij)':''}</span>
-        <span>${r.awayName}${r.awayName===G.myName?' (jij)':''}</span>
-      </div>
-      <div class="score">${r.homeGoals} – ${r.awayGoals}</div>
-      <div class="outcome ${r.outcome}">${outcomeText}</div>
-    </div>
-    <div class="result-stats">
-      <div class="rs"><div class="label">Tegenstander</div><div class="val">${r.opponent}</div></div>
-      <div class="rs"><div class="label">Prijzengeld</div><div class="val">${bonus}</div></div>
-      <div class="rs"><div class="label">Ronde</div><div class="val">${G.round} / ${G.totalRounds}</div></div>
-      <div class="rs"><div class="label">Team OVR</div><div class="val">${myOvr}</div></div>
-    </div>`;
+function showResult(r) {
+  const outcomeText = r.outcome==='win'?'🎉 Gewonnen!':r.outcome==='loss'?'😞 Verloren':'🤝 Gelijkspel';
+  const bonus = r.outcome==='win'?'+€200K':r.outcome==='draw'?'+€80K':'–';
+  const myTeam = G.teams.find(t=>t.name===G.myName);
+  const myOvr  = Math.round(avg(myTeam.starters.map(p=>p.rating)));
+  const grownHTML = r.grownPlayers&&r.grownPlayers.length
+    ? '<div style="margin:8px 0;padding:8px 10px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:8px;font-size:.8rem;color:#4ade80">📈 <strong>Groei!</strong> '+r.grownPlayers.join(', ')+' groeide in rating.</div>' : '';
+  document.getElementById('result-content').innerHTML =
+    '<div class="result-scoreline">'
+    +'<div class="teams-row"><span>'+r.homeName+(r.homeName===G.myName?' ★':'')+'</span>'
+    +'<span>'+r.awayName+(r.awayName===G.myName?' ★':'')+'</span></div>'
+    +'<div class="score">'+r.homeGoals+' – '+r.awayGoals+'</div>'
+    +'<div class="outcome '+r.outcome+'">'+outcomeText+'</div></div>'
+    +'<div class="result-stats">'
+    +'<div class="rs"><div class="label">Prijzengeld</div><div class="val">'+bonus+'</div></div>'
+    +'<div class="rs"><div class="label">Ronde</div><div class="val">'+G.round+' / '+G.totalRounds+'</div></div>'
+    +'<div class="rs"><div class="label">Team OVR</div><div class="val">'+myOvr+'</div></div></div>'
+    +grownHTML
+    +'<div class="match-report">'
+    +'<div class="report-half">⭐ '+(r.myName||G.myName)+'</div>'
+    +renderEventList(r.myEvents)
+    +'<hr class="report-divider">'
+    +'<div class="report-half">🆚 '+(r.oppName||r.opponent)+'</div>'
+    +renderEventList(r.oppEvents)
+    +'</div>';
   document.getElementById('modal-result').classList.add('open');
 }
 
@@ -1266,6 +1565,7 @@ function newSeason() {
   G.season++;
   G.round = 0;
   G.results = [];
+  G.plannedSubs = [];
 
   G.teams.forEach(t => {
     t.points = 0; t.wins = 0; t.draws = 0; t.losses = 0;
