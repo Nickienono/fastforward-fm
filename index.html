@@ -1740,7 +1740,7 @@ function renderPreMatch() {
     '<div class="row">' + row.map((p, ci) => {
       const absIdx = [0, 1, 5, 8][ri] + ci;
       const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === absIdx;
-      return '<div class="player-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer('pitch',' + absIdx + ')">' +
+      return '<div class="player-card' + (sel ? ' selected' : '') + '" data-from="pitch" data-idx="' + absIdx + '" onclick="selectPreMatchPlayer(this.dataset.from,+this.dataset.idx)">' +
              '<span class="pos-badge">' + (p.pos || '') + '</span>' +
              '<span class="pname">' + p.name + '</span>' +
              '<span class="prat">' + p.rating + '</span></div>';
@@ -1751,7 +1751,7 @@ function renderPreMatch() {
   const benchEl = document.getElementById('prematch-bench');
   benchEl.innerHTML = bench.map((p, i) => {
     const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === i;
-    return '<div class="player-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer('bench',' + i + ')">' +
+    return '<div class="player-card' + (sel ? ' selected' : '') + '" data-from="bench" data-idx="' + i + '" onclick="selectPreMatchPlayer(this.dataset.from,+this.dataset.idx)">' +
            '<span class="pos-badge">' + (p.pos || '') + '</span>' +
            '<span class="pname">' + p.name + '</span>' +
            '<span class="prat">' + p.rating + '</span></div>';
