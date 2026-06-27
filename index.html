@@ -1755,54 +1755,57 @@ function openPreMatch() {
 }
 
 function renderPreMatch() {
-  const starters = G.matchLineup.starters;
-  const bench    = G.matchLineup.bench;
+  const ml = G.matchLineup;
+  if (!ml) return;
 
-  // Pitch - gebruik dezelfde positie-layout als renderOpsteliling
-  const pitch = document.getElementById('prematch-pitch');
+  const starters = ml.starters;
+  const bench    = ml.bench;
+  const pitch    = document.getElementById('prematch-pitch');
+  if (!pitch) return;
+
   const rows = [
-    starters.slice(0, 1),   // GK
-    starters.slice(1, 5),   // DEF
-    starters.slice(5, 8),   // MID
-    starters.slice(8, 11),  // ATT
+    starters.slice(0, 1),
+    starters.slice(1, 5),
+    starters.slice(5, 8),
+    starters.slice(8, 11),
   ];
-  pitch.innerHTML = rows.map((row, ri) =>
-    '<div class="row">' + row.map((p, ci) => {
-      const absIdx = [0, 1, 5, 8][ri] + ci;
-      const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === absIdx;
-      return '<div class="player-card' + (sel ? ' selected' : '') + '" data-from="pitch" data-idx="' + absIdx + '" onclick="selectPreMatchPlayer(this.dataset.from,+this.dataset.idx)">' +
-             '<span class="pos-badge">' + (p.pos || '') + '</span>' +
-             '<span class="pname">' + p.name + '</span>' +
-             '<span class="prat">' + p.rating + '</span></div>';
-    }).join('') + '</div>'
-  ).join('');
 
-  // Bank
-  // Bank toevoegen onderaan het prematch veld
-  const prematchPitch = document.getElementById('prematch-pitch');
-  if (prematchPitch) {
-    const bench = (G.matchLineup || G.teams.find(t => t.name === G.myName)).bench;
-    const benchHTML = bench.map((p, idx) => {
-      const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
-      return '<div class="pcard bench-card' + (sel?' selected':'') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
+  // Veld spelers als pcard vakjes
+  const pitchHTML = rows.map(row =>
+    '<div class="pitch-row">' + row.map(p => {
+      const idx = starters.indexOf(p);
+      const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === idx;
+      return '<div class="pcard' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'pitch\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
         '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
         '<div class="ppos">' + p.pos + '</div>' +
         '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
         '</div>';
-    }).join('');
-    prematchPitch.innerHTML += '<div class="bench-divider">🪑 Wisselbank</div><div class="bench-in-pitch">' + benchHTML + '</div>';
-  }
+    }).join('') + '</div>'
+  ).join('');
+
+  // Bank spelers als pcard vakjes onderaan
+  const benchHTML = bench.map((p, idx) => {
+    const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
+    return '<div class="pcard bench-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
+      '<div class="prating">' + p.rating + '</div>' +
+      '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
+      '<div class="ppos">' + p.pos + '</div>' +
+      '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
+      '</div>';
+  }).join('');
+
+  pitch.innerHTML = pitchHTML +
+    '<div class="bench-divider">🪑 Wisselbank</div>' +
+    '<div class="bench-in-pitch">' + benchHTML + '</div>';
 
   const hint = document.getElementById('prematch-swap-hint');
   if (hint) {
-    hint.textContent = preMatchSelected ? '✅ Geselecteerd — klik een andere speler om te wisselen' : 'Klik twee spelers om te wisselen';
+    hint.textContent = preMatchSelected ? '\u2705 Geselecteerd — klik een andere speler om te wisselen' : 'Klik een veldspeler en dan een bankspeler om te wisselen';
     hint.style.color = preMatchSelected ? 'var(--gold)' : 'var(--dim)';
   }
   renderPreMatchSubs();
-  saveGame();
 }
-
 function removePreMatchSub(i) {
   G.plannedSubs.splice(i, 1);
   renderPreMatchSubs();
@@ -1864,13 +1867,39 @@ function addPreMatchSub() {
   const ml = G.matchLineup;
   const usedOut = new Set(subs.map(s => s.outIdx));
   const usedIn  = new Set(subs.map(s => s.benchIdx));
-  const outIdx   = ml.starters.findIndex((_, i) => !usedOut.has(i));
-  const benchIdx = ml.bench.findIndex((_, i) => !usedIn.has(i));
-  if (outIdx < 0 || benchIdx < 0) { toast('Geen vrije spelers meer!'); return; }
-  G.plannedSubs.push({ outIdx, benchIdx });
+
+  // Toon inline keuze UI
+  const rowsEl = document.getElementById('prematch-sub-rows');
+  if (!rowsEl) return;
+
+  const starterOpts = ml.starters.map((p, i) =>
+    '<option value="' + i + '"' + (usedOut.has(i) ? ' disabled' : '') + '>' + p.name + ' (' + p.pos + ') OVR' + p.rating + '</option>'
+  ).join('');
+  const benchOpts = ml.bench.map((p, i) =>
+    '<option value="' + i + '"' + (usedIn.has(i) ? ' disabled' : '') + '>' + p.name + ' (' + p.pos + ') OVR' + p.rating + '</option>'
+  ).join('');
+
+  rowsEl.innerHTML += '<div class="sub-row" style="flex-direction:column;gap:6px;padding:8px;background:rgba(255,255,255,.05);border-radius:8px;margin-top:6px">' +
+    '<div style="font-size:.78rem;color:var(--dim)">Wie gaat eraf?</div>' +
+    '<select id="sub-out-sel" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;width:100%"><option value="">-- Kies speler --</option>' + starterOpts + '</select>' +
+    '<div style="font-size:.78rem;color:var(--dim)">Wie komt erin?</div>' +
+    '<select id="sub-in-sel" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;width:100%"><option value="">-- Kies wisselspeler --</option>' + benchOpts + '</select>' +
+    '<button onclick="confirmPreMatchSub()" style="background:var(--green);border:none;border-radius:6px;color:#fff;padding:7px 14px;cursor:pointer;font-size:.82rem;font-weight:700">✓ Bevestigen</button>' +
+    '</div>';
+}
+
+function confirmPreMatchSub() {
+  const outSel = document.getElementById('sub-out-sel');
+  const inSel  = document.getElementById('sub-in-sel');
+  if (!outSel || !inSel) return;
+  const oIdx = parseInt(outSel.value);
+  const bIdx = parseInt(inSel.value);
+  if (isNaN(oIdx) || isNaN(bIdx)) { toast('Kies beide spelers!'); return; }
+  G.plannedSubs = G.plannedSubs || [];
+  G.plannedSubs.push({ outIdx: oIdx, benchIdx: bIdx });
   renderPreMatchSubs();
   saveGame();
-  toast('Wissel toegevoegd!');
+  toast('Wissel gepland!');
 }
 
 function saveAsDefault() {
