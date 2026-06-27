@@ -1783,7 +1783,7 @@ function renderPreMatch() {
   if (prematchPitch) {
     const benchHTML = ml.bench.map((p, idx) => {
       const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
-      return '<div class="pcard bench-card' + (sel?' selected':'') + '" onclick="selectPreMatchPlayer('bench',' + idx + ')">' +
+      return '<div class="pcard bench-card' + (sel?' selected':'') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
         '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
         '<div class="ppos">' + p.pos + '</div>' +
