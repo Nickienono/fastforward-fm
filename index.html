@@ -1781,7 +1781,8 @@ function renderPreMatch() {
   // Bank toevoegen onderaan het prematch veld
   const prematchPitch = document.getElementById('prematch-pitch');
   if (prematchPitch) {
-    const benchHTML = ml.bench.map((p, idx) => {
+    const bench = (G.matchLineup || G.teams.find(t => t.name === G.myName)).bench;
+    const benchHTML = bench.map((p, idx) => {
       const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
       return '<div class="pcard bench-card' + (sel?' selected':'') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
