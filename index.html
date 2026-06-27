@@ -625,6 +625,10 @@ async function launchGame(hasSave) {
         const { gameState } = await res.json();
         if (gameState && gameState.teams) {
           G = gameState;
+          // Initialiseer velden die ontbreken in oude saves
+          G.plannedSubs = G.plannedSubs || [];
+          G.topScorers  = G.topScorers  || {};
+          G.matchLineup = G.matchLineup  || null;
           showScreen('main');
           renderAll();
           toast(`Welkom terug, ${CURRENT_USER.username}#${CURRENT_USER.tag}! 📂 Seizoen ${G.season}, Ronde ${G.round}`);
@@ -1713,6 +1717,12 @@ function toast(msg) {
 let preMatchSelected = null;
 
 function openPreMatch() {
+  if (G.round >= G.totalRounds) { showSeasonEnd(); return; }
+
+  // Zorg dat nieuwe velden bestaan (compatibiliteit met oude saves)
+  G.plannedSubs = G.plannedSubs || [];
+  G.topScorers  = G.topScorers  || {};
+
   const myTeam = G.teams.find(t => t.name === G.myName);
   G.matchLineup = {
     starters: myTeam.starters.map(p => ({...p})),
