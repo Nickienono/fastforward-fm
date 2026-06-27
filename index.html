@@ -1809,6 +1809,70 @@ function removePreMatchSub(i) {
   saveGame();
 }
 
+function selectPreMatchPlayer(from, idx) {
+  if (!preMatchSelected) {
+    preMatchSelected = { from, idx };
+    renderPreMatch();
+    return;
+  }
+  if (preMatchSelected.from === from && preMatchSelected.idx === idx) {
+    preMatchSelected = null;
+    renderPreMatch();
+    return;
+  }
+  const ml = G.matchLineup;
+  if (preMatchSelected.from === 'pitch' && from === 'pitch') {
+    [ml.starters[preMatchSelected.idx], ml.starters[idx]] = [ml.starters[idx], ml.starters[preMatchSelected.idx]];
+  } else if (preMatchSelected.from === 'bench' && from === 'bench') {
+    [ml.bench[preMatchSelected.idx], ml.bench[idx]] = [ml.bench[idx], ml.bench[preMatchSelected.idx]];
+  } else if (preMatchSelected.from === 'pitch' && from === 'bench') {
+    [ml.starters[preMatchSelected.idx], ml.bench[idx]] = [ml.bench[idx], ml.starters[preMatchSelected.idx]];
+  } else {
+    [ml.starters[idx], ml.bench[preMatchSelected.idx]] = [ml.bench[preMatchSelected.idx], ml.starters[idx]];
+  }
+  preMatchSelected = null;
+  renderPreMatch();
+}
+
+function renderPreMatchSubs() {
+  const subs   = G.plannedSubs || [];
+  const ml     = G.matchLineup;
+  const rowsEl = document.getElementById('prematch-sub-rows');
+  if (!rowsEl) return;
+  if (subs.length === 0) {
+    rowsEl.innerHTML = '<div style="color:var(--dim);font-size:.82rem;padding:4px 0 8px">Nog geen wissels gepland.</div>';
+  } else {
+    rowsEl.innerHTML = subs.map((s, i) => {
+      const outP = ml.starters[s.outIdx];
+      const inP  = ml.bench[s.benchIdx];
+      if (!outP || !inP) return '';
+      return '<div class="sub-row">' +
+        '<span class="sub-badge" style="border:1px solid var(--red)">' + outP.name.split(' ').pop() + ' (' + outP.pos + ')</span>' +
+        '<span class="sub-arrow">→</span>' +
+        '<span class="sub-badge" style="border:1px solid var(--green)">' + inP.name.split(' ').pop() + ' (' + inP.pos + ')</span>' +
+        '<button class="btn-sub-rm" onclick="removePreMatchSub(' + i + ')" title="Verwijder">✕</button>' +
+        '</div>';
+    }).join('');
+  }
+  const addBtn = document.getElementById('prematch-add-sub');
+  if (addBtn) addBtn.disabled = subs.length >= 5;
+}
+
+function addPreMatchSub() {
+  const subs = G.plannedSubs || [];
+  if (subs.length >= 5) { toast('Maximaal 5 wissels!'); return; }
+  const ml = G.matchLineup;
+  const usedOut = new Set(subs.map(s => s.outIdx));
+  const usedIn  = new Set(subs.map(s => s.benchIdx));
+  const outIdx   = ml.starters.findIndex((_, i) => !usedOut.has(i));
+  const benchIdx = ml.bench.findIndex((_, i) => !usedIn.has(i));
+  if (outIdx < 0 || benchIdx < 0) { toast('Geen vrije spelers meer!'); return; }
+  G.plannedSubs.push({ outIdx, benchIdx });
+  renderPreMatchSubs();
+  saveGame();
+  toast('Wissel toegevoegd!');
+}
+
 function saveAsDefault() {
   const myTeam = G.teams.find(t => t.name === G.myName);
   myTeam.starters = G.matchLineup.starters.map(p => ({...p}));
