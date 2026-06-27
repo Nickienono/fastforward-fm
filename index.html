@@ -277,6 +277,9 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div style="font-size:3.2rem;margin-bottom:6px">⚽</div>
     <h1 style="color:var(--gold);font-size:1.7rem;font-weight:800;margin-bottom:4px">FastForward FM</h1>
     <p style="color:var(--dim);font-size:0.88rem;margin-bottom:4px">Eredivisie Manager — speel overal, bewaar je voortgang</p>
+    <div style="background:rgba(240,165,0,.12);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin:12px 0 4px;font-size:.82rem;color:var(--gold);line-height:1.5">
+      ⚠️ <strong>Update melding:</strong> Na een recente update zijn alle accounts opnieuw ingesteld. Je kunt <strong>gewoon opnieuw beginnen</strong> — vul alleen je naam in zonder tag.
+    </div>
 
     <!-- Stap 1: inlog formulier -->
     <div id="login-step1">
@@ -1775,7 +1778,7 @@ function renderPreMatch() {
   ).join('');
 
   // Bank
-  const benchEl = // Bank toevoegen onderaan het prematch veld
+  // Bank toevoegen onderaan het prematch veld
   const prematchPitch = document.getElementById('prematch-pitch');
   if (prematchPitch) {
     const benchHTML = ml.bench.map((p, idx) => {
