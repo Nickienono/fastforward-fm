@@ -908,6 +908,8 @@ function startGame(teamIdx) {
   document.getElementById('top-round-total').textContent = totalRounds;
 
   showScreen('main');
+  G.matchLineup = null;
+  G.plannedSubs = [];
   renderAll();
   saveGame(); // sla op direct na clubkeuze
 }
@@ -1840,11 +1842,13 @@ function addPreMatchSub() {
   if (!G.plannedSubs) G.plannedSubs = [];
   G.plannedSubs.push({ outIdx, benchIdx });
   renderPreMatchSubs();
+  saveGame();
 }
 
 function removePreMatchSub(i) {
   G.plannedSubs.splice(i, 1);
   renderPreMatchSubs();
+  saveGame();
 }
 
 function saveAsDefault() {
