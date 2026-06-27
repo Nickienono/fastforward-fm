@@ -1045,7 +1045,12 @@ function playNextMatch() {
   if (G.round >= G.totalRounds) { showSeasonEnd(); return; }
 
   const myTeam = G.teams.find(t => t.name === G.myName);
+  const _origStarters = [...myTeam.starters];
+  const _origBench    = [...myTeam.bench];
   if (G.matchLineup) {
+    // Sla originelen op zodat we na de wedstrijd kunnen herstellen
+    myTeam._baseStarters = _origStarters;
+    myTeam._baseBench    = _origBench;
     myTeam.starters = G.matchLineup.starters;
     myTeam.bench    = G.matchLineup.bench;
   }
@@ -1112,6 +1117,22 @@ function playNextMatch() {
     }
   });
 
+  // Herstel basisopstelling maar behoud fitness/stats van gespeelde spelers
+  if (myTeam._baseStarters) {
+    const allPlayed = [...myTeam.starters, ...myTeam.bench];
+    myTeam._baseStarters.forEach(p => {
+      const played = allPlayed.find(m => m.name === p.name);
+      if (played) { p.fitness = played.fitness; p._matchGoals = played._matchGoals || 0; p._matchAssists = played._matchAssists || 0; p._played = played._played || false; }
+    });
+    myTeam._baseBench.forEach(p => {
+      const played = allPlayed.find(m => m.name === p.name);
+      if (played) { p.fitness = played.fitness; }
+    });
+    myTeam.starters = myTeam._baseStarters;
+    myTeam.bench    = myTeam._baseBench;
+    delete myTeam._baseStarters;
+    delete myTeam._baseBench;
+  }
   G.matchLineup = null;
   G.plannedSubs = [];
   renderAll(); saveGame();
