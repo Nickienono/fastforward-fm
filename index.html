@@ -163,15 +163,11 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .fitness-fill.hi  { background: #4ade80; }
 .fitness-fill.mid { background: var(--gold); }
 .fitness-fill.lo  { background: var(--red); }
-.bench-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-.bench-wrap h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 12px; }
-.bench-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.bcard { background: var(--panel2); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 10px; cursor: pointer; transition: all .15s; min-width: 80px; text-align: center; }
-.bcard:hover { border-color: var(--gold); }
-.bcard.selected { border-color: var(--gold); background: rgba(240,165,0,.1); }
-.bcard .bname   { font-size: 0.72rem; font-weight: 600; }
-.bcard .brating { font-size: 0.88rem; font-weight: 700; color: var(--gold); }
-.bcard .bpos    { font-size: 0.65rem; color: var(--dim); }
+.bench-divider { border-top: 1px dashed rgba(255,255,255,.18); margin: 6px 0 10px; text-align: center; font-size: .6rem; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; padding-top: 8px; }
+.bench-in-pitch { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-bottom: 6px; }
+.pcard.bench-card { background: rgba(0,0,0,.45); opacity: .88; }
+.pcard.bench-card:hover { opacity: 1; }
+.pcard.bench-card.selected { opacity: 1; }
 
 /* ── TRANSFERS ── */
 .tf-filters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -383,10 +379,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         </div>
         <div class="pitch" id="pitch"></div>
       </div>
-      <div class="bench-wrap">
-        <h3>🪑 Wisselbank</h3>
-        <div class="bench-row" id="bench-row"></div>
-      </div>
+
       <div class="sub-plan-wrap">
         <h3>🔄 Wisselplan — max 5 wissels (computer wisselt in 2e helft)</h3>
         <div id="sub-plan-rows"></div>
@@ -433,10 +426,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div class="pitch-wrap" style="margin-bottom:10px">
       <div class="pitch" id="prematch-pitch"></div>
     </div>
-    <div class="bench-wrap" style="margin-bottom:10px">
-      <h3>🪑 Bank</h3>
-      <div class="bench-row" id="prematch-bench"></div>
-    </div>
+
     <div id="prematch-swap-hint" style="font-size:.82rem;color:var(--dim);margin-bottom:12px;min-height:18px"></div>
     <div class="prematch-subs-wrap">
       <h3 style="font-size:.85rem;margin-bottom:8px">🔄 Wissels tijdens wedstrijd (max 5 — computer voert uit in 2e helft)</h3>
@@ -1177,7 +1167,24 @@ function sellPlayer(pid) {
 //  SWAP (OPSTELLING)
 // ══════════════════════════════════════════════════
 
-function selectPitchPlayer(idx) {
+function selectPlayer(from, idx) {
+  if (selectedPlayer && selectedPlayer.from === from && selectedPlayer.idx === idx) {
+    selectedPlayer = null; renderOpsteliling(); return;
+  }
+  if (selectedPlayer) {
+    const myTeam = G.teams.find(t => t.name === G.myName);
+    const sp = selectedPlayer;
+    if (sp.from==='pitch'&&from==='pitch') { [myTeam.starters[sp.idx],myTeam.starters[idx]]=[myTeam.starters[idx],myTeam.starters[sp.idx]]; }
+    else if (sp.from==='bench'&&from==='bench') { [myTeam.bench[sp.idx],myTeam.bench[idx]]=[myTeam.bench[idx],myTeam.bench[sp.idx]]; }
+    else if (sp.from==='pitch'&&from==='bench') { [myTeam.starters[sp.idx],myTeam.bench[idx]]=[myTeam.bench[idx],myTeam.starters[sp.idx]]; }
+    else { [myTeam.starters[idx],myTeam.bench[sp.idx]]=[myTeam.bench[sp.idx],myTeam.starters[idx]]; }
+    selectedPlayer = null; saveGame(); toast('Spelers gewisseld!');
+  } else {
+    selectedPlayer = { from, idx };
+  }
+  renderOpsteliling();
+}
+function _oldSelectPitchPlayer(idx) {
   if (selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===idx) {
     selectedPlayer = null; renderOpsteliling(); return;
   }
@@ -1423,7 +1430,7 @@ function renderOpsteliling() {
     `<div class="pitch-row">${row.map(p => {
       const idx = myTeam.starters.indexOf(p);
       const sel = selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===idx;
-      return `<div class="pcard${sel?' selected':''}" onclick="selectPitchPlayer(${idx})">
+      return `<div class="pcard${sel?' selected':''}" onclick="selectPlayer('pitch',${idx})">
         <div class="prating">${p.rating}</div>
         <div class="pname">${p.name.split(' ').pop()}</div>
         <div class="ppos">${p.pos}${p.age?' · '+p.age:''}</div>
@@ -1432,21 +1439,26 @@ function renderOpsteliling() {
     }).join('')}</div>`
   ).join('');
 
-  document.getElementById('bench-row').innerHTML = myTeam.bench.map((p, idx) => {
-    const sel = selectedPlayer && selectedPlayer.from==='bench' && selectedPlayer.idx===idx;
-    return `<div class="bcard${sel?' selected':''}" onclick="selectBenchPlayer(${idx})">
-      <div class="brating">${p.rating}</div>
-      <div class="bname">${p.name.split(' ').pop()}</div>
-      <div class="bpos">${p.pos}</div>
-      <div class="fitness-bar"><div class="fitness-fill ${fitColor(p.fitness)}" style="width:${p.fitness}%"></div></div>
-    </div>`;
-  }).join('');
+  // Bank in pitch renderen
+  const pitchEl = document.getElementById('pitch');
+  if (pitchEl) {
+    const benchHTML = myTeam.bench.map((p, idx) => {
+      const sel = selectedPlayer && selectedPlayer.from==='bench' && selectedPlayer.idx===idx;
+      return `<div class="pcard bench-card${sel?' selected':''}" onclick="selectPlayer('bench',${idx})">
+        <div class="prating">${p.rating}</div>
+        <div class="pname">${p.name.split(' ').pop()}</div>
+        <div class="ppos">${p.pos}</div>
+        <div class="fitness-bar"><div class="fitness-fill ${fitColor(p.fitness)}" style="width:${p.fitness}%"></div></div>
+      </div>`;
+    }).join('');
+    pitchEl.innerHTML += '<div class="bench-divider">🪑 Wisselbank</div><div class="bench-in-pitch">' + benchHTML + '</div>';
+  }
 
   const hintEl = document.getElementById('swap-hint');
-  hintEl.textContent = selectedPlayer
-    ? '✅ Geselecteerd — klik een andere speler om te wisselen'
-    : 'Klik twee spelers om te wisselen';
-  hintEl.style.color = selectedPlayer ? 'var(--gold)' : 'var(--dim)';
+  if (hintEl) {
+    hintEl.textContent = selectedPlayer ? '✅ Geselecteerd — klik een andere speler om te wisselen' : 'Klik twee spelers om te wisselen';
+    hintEl.style.color = selectedPlayer ? 'var(--gold)' : 'var(--dim)';
+  }
   renderSubPlan();
 }
 
@@ -1763,84 +1775,26 @@ function renderPreMatch() {
   ).join('');
 
   // Bank
-  const benchEl = document.getElementById('prematch-bench');
-  benchEl.innerHTML = bench.map((p, i) => {
-    const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === i;
-    return '<div class="player-card' + (sel ? ' selected' : '') + '" data-from="bench" data-idx="' + i + '" onclick="selectPreMatchPlayer(this.dataset.from,+this.dataset.idx)">' +
-           '<span class="pos-badge">' + (p.pos || '') + '</span>' +
-           '<span class="pname">' + p.name + '</span>' +
-           '<span class="prat">' + p.rating + '</span></div>';
-  }).join('');
-}
-
-function selectPreMatchPlayer(from, idx) {
-  if (!preMatchSelected) {
-    preMatchSelected = { from, idx };
-    const name = from === 'pitch' ? G.matchLineup.starters[idx].name : G.matchLineup.bench[idx].name;
-    document.getElementById('prematch-swap-hint').textContent = name + ' geselecteerd — klik een andere speler om te wisselen';
-    renderPreMatch();
-    return;
-  }
-  if (preMatchSelected.from === from && preMatchSelected.idx === idx) {
-    preMatchSelected = null;
-    document.getElementById('prematch-swap-hint').textContent = '';
-    renderPreMatch();
-    return;
-  }
-
-  // Wissel uitvoeren
-  const s = G.matchLineup.starters;
-  const b = G.matchLineup.bench;
-  if (preMatchSelected.from === 'pitch' && from === 'pitch') {
-    [s[preMatchSelected.idx], s[idx]] = [s[idx], s[preMatchSelected.idx]];
-  } else if (preMatchSelected.from === 'bench' && from === 'bench') {
-    [b[preMatchSelected.idx], b[idx]] = [b[idx], b[preMatchSelected.idx]];
-  } else {
-    const si = preMatchSelected.from === 'pitch' ? preMatchSelected.idx : idx;
-    const bi = preMatchSelected.from === 'bench' ? preMatchSelected.idx : idx;
-    const tmp = s[si];
-    s[si] = b[bi];
-    b[bi] = tmp;
-  }
-  preMatchSelected = null;
-  document.getElementById('prematch-swap-hint').textContent = '';
-  renderPreMatch();
-}
-
-function renderPreMatchSubs() {
-  const el = document.getElementById('prematch-sub-rows');
-  const starters = G.matchLineup ? G.matchLineup.starters : [];
-  const bench    = G.matchLineup ? G.matchLineup.bench    : [];
-  if (!G.plannedSubs || G.plannedSubs.length === 0) {
-    el.innerHTML = '<p style="font-size:.8rem;color:var(--dim);margin:0 0 8px">Geen wissels gepland.</p>';
-  } else {
-    el.innerHTML = G.plannedSubs.map((sub, i) => {
-      const outName   = starters[sub.outIdx]  ? starters[sub.outIdx].name  : '?';
-      const benchName = bench[sub.benchIdx]   ? bench[sub.benchIdx].name   : '?';
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem">' +
-             '<span>' + outName + '</span><span style="color:var(--dim)">→</span><span>' + benchName + '</span>' +
-             '<button onclick="removePreMatchSub(' + i + ')" style="margin-left:auto;background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem">✕</button>' +
-             '</div>';
+  const benchEl = // Bank toevoegen onderaan het prematch veld
+  const prematchPitch = document.getElementById('prematch-pitch');
+  if (prematchPitch) {
+    const benchHTML = ml.bench.map((p, idx) => {
+      const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
+      return '<div class="pcard bench-card' + (sel?' selected':'') + '" onclick="selectPreMatchPlayer('bench',' + idx + ')">' +
+        '<div class="prating">' + p.rating + '</div>' +
+        '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
+        '<div class="ppos">' + p.pos + '</div>' +
+        '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
+        '</div>';
     }).join('');
+    prematchPitch.innerHTML += '<div class="bench-divider">🪑 Wisselbank</div><div class="bench-in-pitch">' + benchHTML + '</div>';
   }
-  const addBtn = document.getElementById('prematch-add-sub');
-  if (addBtn) addBtn.style.display = G.plannedSubs.length >= 5 ? 'none' : '';
-}
 
-function addPreMatchSub() {
-  const starters = G.matchLineup ? G.matchLineup.starters.slice(1) : []; // exclude GK
-  const bench    = G.matchLineup ? G.matchLineup.bench    : [];
-  if (!starters.length || !bench.length) return;
-  const outName   = prompt('Welke speler eraf? (' + starters.map(p => p.name).join(', ') + ')');
-  if (!outName) return;
-  const outIdx = G.matchLineup.starters.findIndex(p => p.name.toLowerCase() === outName.toLowerCase());
-  if (outIdx < 1) return alert('Speler niet gevonden in basis.');
-  const inName = prompt('Welke bankspeler erin? (' + bench.map(p => p.name).join(', ') + ')');
-  if (!inName) return;
-  const benchIdx = bench.findIndex(p => p.name.toLowerCase() === inName.toLowerCase());
-  if (benchIdx < 0) return alert('Bankspeler niet gevonden.');
-  if (!G.plannedSubs) G.plannedSubs = [];
-  G.plannedSubs.push({ outIdx, benchIdx });
+  const hint = document.getElementById('prematch-swap-hint');
+  if (hint) {
+    hint.textContent = preMatchSelected ? '✅ Geselecteerd — klik een andere speler om te wisselen' : 'Klik twee spelers om te wisselen';
+    hint.style.color = preMatchSelected ? 'var(--gold)' : 'var(--dim)';
+  }
   renderPreMatchSubs();
   saveGame();
 }
