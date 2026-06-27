@@ -1194,28 +1194,12 @@ function sellPlayer(pid) {
 // ══════════════════════════════════════════════════
 
 function selectPlayer(from, idx) {
-  // Zelfde speler opnieuw klikken → deselecteer
   if (selectedPlayer && selectedPlayer.from === from && selectedPlayer.idx === idx) {
     selectedPlayer = null; renderOpsteliling(); return;
   }
   if (selectedPlayer) {
     const myTeam = G.teams.find(t => t.name === G.myName);
     const sp = selectedPlayer;
-    // Haal beide spelers op
-    const p1 = sp.from === 'pitch' ? myTeam.starters[sp.idx] : myTeam.bench[sp.idx];
-    const p2 = from    === 'pitch' ? myTeam.starters[idx]    : myTeam.bench[idx];
-    // Positiegroep check
-    const posGroup = pos => {
-      if (pos === 'GK')                    return 'GK';
-      if (['LB','CB','RB','LWB','RWB'].includes(pos)) return 'DEF';
-      if (['DM','CM','LM','RM','AM'].includes(pos))   return 'MID';
-      if (['LW','RW','CF','ST','SS'].includes(pos))   return 'ATT';
-      return pos;
-    };
-    if (posGroup(p1.pos) !== posGroup(p2.pos)) {
-      toast('\u274C Alleen wisselen met zelfde positie (' + p1.pos + ' \u2194 ' + p2.pos + ')');
-      selectedPlayer = null; renderOpsteliling(); return;
-    }
     if (sp.from === 'pitch' && from === 'pitch') {
       [myTeam.starters[sp.idx], myTeam.starters[idx]] = [myTeam.starters[idx], myTeam.starters[sp.idx]];
     } else if (sp.from === 'bench' && from === 'bench') {
@@ -1857,29 +1841,67 @@ function removePreMatchSub(i) {
 }
 
 function selectPreMatchPlayer(from, idx) {
+  const ml = G.matchLineup;
+  if (!ml) return;
   if (!preMatchSelected) {
     preMatchSelected = { from, idx };
     renderPreMatch();
     return;
   }
   if (preMatchSelected.from === from && preMatchSelected.idx === idx) {
-    preMatchSelected = null;
-    renderPreMatch();
-    return;
+    preMatchSelected = null; renderPreMatch(); return;
   }
-  const ml = G.matchLineup;
-  if (preMatchSelected.from === 'pitch' && from === 'pitch') {
-    [ml.starters[preMatchSelected.idx], ml.starters[idx]] = [ml.starters[idx], ml.starters[preMatchSelected.idx]];
-  } else if (preMatchSelected.from === 'bench' && from === 'bench') {
-    [ml.bench[preMatchSelected.idx], ml.bench[idx]] = [ml.bench[idx], ml.bench[preMatchSelected.idx]];
-  } else if (preMatchSelected.from === 'pitch' && from === 'bench') {
-    [ml.starters[preMatchSelected.idx], ml.bench[idx]] = [ml.bench[idx], ml.starters[preMatchSelected.idx]];
+  const sp = preMatchSelected;
+  if (sp.from === 'pitch' && from === 'pitch') {
+    [ml.starters[sp.idx], ml.starters[idx]] = [ml.starters[idx], ml.starters[sp.idx]];
+  } else if (sp.from === 'bench' && from === 'bench') {
+    [ml.bench[sp.idx], ml.bench[idx]] = [ml.bench[idx], ml.bench[sp.idx]];
+  } else if (sp.from === 'pitch' && from === 'bench') {
+    [ml.starters[sp.idx], ml.bench[idx]] = [ml.bench[idx], ml.starters[sp.idx]];
   } else {
-    [ml.starters[idx], ml.bench[preMatchSelected.idx]] = [ml.bench[preMatchSelected.idx], ml.starters[idx]];
+    [ml.starters[idx], ml.bench[sp.idx]] = [ml.bench[sp.idx], ml.starters[idx]];
   }
   preMatchSelected = null;
   renderPreMatch();
 }
+
+function addPreMatchSub() {
+  const subs = G.plannedSubs || [];
+  if (subs.length >= 5) { toast('Maximaal 5 wissels!'); return; }
+  const ml = G.matchLineup;
+  const usedOut = new Set(subs.map(s => s.outIdx));
+  const usedIn  = new Set(subs.map(s => s.benchIdx));
+  const starterOpts = ml.starters.map((p, i) =>
+    '<option value="' + i + '"' + (usedOut.has(i) ? ' disabled' : '') + '>' + p.name + ' (' + p.pos + ') OVR' + p.rating + '</option>'
+  ).join('');
+  const benchOpts = ml.bench.map((p, i) =>
+    '<option value="' + i + '"' + (usedIn.has(i) ? ' disabled' : '') + '>' + p.name + ' (' + p.pos + ') OVR' + p.rating + '</option>'
+  ).join('');
+  const rowsEl = document.getElementById('prematch-sub-rows');
+  if (!rowsEl) return;
+  rowsEl.innerHTML += '<div class="sub-row" style="flex-direction:column;gap:6px;padding:8px;background:rgba(255,255,255,.05);border-radius:8px;margin-top:6px">' +
+    '<div style="font-size:.78rem;color:var(--dim)">Wie gaat eraf?</div>' +
+    '<select id="sub-out-sel" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;width:100%"><option value="">-- Kies speler --</option>' + starterOpts + '</select>' +
+    '<div style="font-size:.78rem;color:var(--dim)">Wie komt erin?</div>' +
+    '<select id="sub-in-sel" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;width:100%"><option value="">-- Kies wisselspeler --</option>' + benchOpts + '</select>' +
+    '<button onclick="confirmPreMatchSub()" style="background:var(--green);border:none;border-radius:6px;color:#fff;padding:7px 14px;cursor:pointer;font-size:.82rem;font-weight:700">\u2713 Bevestigen</button>' +
+    '</div>';
+}
+
+function confirmPreMatchSub() {
+  const outSel = document.getElementById('sub-out-sel');
+  const inSel  = document.getElementById('sub-in-sel');
+  if (!outSel || !inSel) return;
+  const oIdx = parseInt(outSel.value);
+  const bIdx = parseInt(inSel.value);
+  if (isNaN(oIdx) || isNaN(bIdx)) { toast('Kies beide spelers!'); return; }
+  G.plannedSubs = G.plannedSubs || [];
+  G.plannedSubs.push({ outIdx: oIdx, benchIdx: bIdx });
+  renderPreMatchSubs();
+  saveGame();
+  toast('\u2705 Wissel gepland!');
+}
+
 
 function renderPreMatchSubs() {
   const subs   = G.plannedSubs || [];
