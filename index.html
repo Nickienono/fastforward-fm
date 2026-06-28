@@ -299,6 +299,46 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .btn-save-newgame:hover { border-color: var(--red); color: var(--red); }
 .save-inactivity-note { font-size: 0.75rem; color: var(--dim); text-align: center; margin-top: 18px; opacity: .7; }
 
+/* ── SCORE INFO ── */
+.score-info {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: .78rem;
+}
+.score-info summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px;
+  cursor: pointer;
+  color: var(--dim);
+  user-select: none;
+  list-style: none;
+}
+.score-info summary::-webkit-details-marker { display: none; }
+.score-info summary span { flex: 1; font-weight: 500; }
+.score-info[open] summary { border-bottom: 1px solid var(--border); color: var(--text); }
+.score-info-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--panel);
+  color: var(--dim);
+  line-height: 1.6;
+}
+.score-info-lang {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.score-info-flag { font-size: 1.1rem; margin-top: 1px; flex-shrink: 0; }
+.score-info-lang b { color: var(--text); }
+
 /* ── LEADERBOARD ── */
 .lb-wrap { max-width: 420px; width: 100%; margin-top: 18px; }
 .lb-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
@@ -539,6 +579,29 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 0 8px">🌍 Globale Ranglijst</div>
     <div id="save-lb-list" class="save-card" style="padding:4px 0;overflow:hidden"><div class="lb-empty">Laden…</div></div>
   </div>
+  <details class="score-info">
+    <summary>ℹ️ <span>Hoe werkt de ranglijst? · How does scoring work?</span></summary>
+    <div class="score-info-body">
+      <div class="score-info-lang">
+        <span class="score-info-flag">🇳🇱</span>
+        <div>
+          <b>Hoe scoor je punten?</b><br>
+          Elke carrière is uniek. Punten worden aan het einde van elk seizoen (Ronde 34) toegevoegd.<br>
+          <b>Eindstand:</b> Top 10 krijgt punten — Kampioen = 1000 ptn, plek 10 = 100 ptn.<br>
+          <b>Topscorers:</b> Plek 1 t/m 10 levert je 10 tot 1 ptn op per eigen speler in de lijst.
+        </div>
+      </div>
+      <div class="score-info-lang">
+        <span class="score-info-flag">🇬🇧</span>
+        <div>
+          <b>How to score points?</b><br>
+          Every career is unique. Points are added at the end of each completed season (Round 34).<br>
+          <b>League Rank:</b> Top 10 earns points — Champion = 1000 pts, 10th place = 100 pts.<br>
+          <b>Top Scorers:</b> Positions 1–10 earn you 10 to 1 pts per own player on the list.
+        </div>
+      </div>
+    </div>
+  </details>
   <div class="save-inactivity-note" id="save-inactivity-note" style="display:none">🔒 Je sessie was inactief. Klik op Vervolg om verder te spelen.</div>
 </div>
 
@@ -616,6 +679,29 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
   <div class="modal modal-wide">
     <h2>🌍 Globale Ranglijst</h2>
     <div id="lb-modal-list"><div class="lb-empty">Laden…</div></div>
+      <details class="score-info">
+    <summary>ℹ️ <span>Hoe werkt de ranglijst? · How does scoring work?</span></summary>
+    <div class="score-info-body">
+      <div class="score-info-lang">
+        <span class="score-info-flag">🇳🇱</span>
+        <div>
+          <b>Hoe scoor je punten?</b><br>
+          Elke carrière is uniek. Punten worden aan het einde van elk seizoen (Ronde 34) toegevoegd.<br>
+          <b>Eindstand:</b> Top 10 krijgt punten — Kampioen = 1000 ptn, plek 10 = 100 ptn.<br>
+          <b>Topscorers:</b> Plek 1 t/m 10 levert je 10 tot 1 ptn op per eigen speler in de lijst.
+        </div>
+      </div>
+      <div class="score-info-lang">
+        <span class="score-info-flag">🇬🇧</span>
+        <div>
+          <b>How to score points?</b><br>
+          Every career is unique. Points are added at the end of each completed season (Round 34).<br>
+          <b>League Rank:</b> Top 10 earns points — Champion = 1000 pts, 10th place = 100 pts.<br>
+          <b>Top Scorers:</b> Positions 1–10 earn you 10 to 1 pts per own player on the list.
+        </div>
+      </div>
+    </div>
+  </details>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="document.getElementById('modal-leaderboard').classList.remove('open')">✕ Sluiten</button>
     </div>
