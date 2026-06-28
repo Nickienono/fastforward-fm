@@ -1,5 +1,6 @@
 // GET  /api/leaderboard  → returns top 50 entries sorted by points desc
 // POST /api/leaderboard  → upserts one career entry (keyed by careerId)
+// DELETE /api/leaderboard → wipes all entries
 
 const DB_URL    = process.env.FIREBASE_DB_URL;
 const DB_SECRET = process.env.FIREBASE_DB_SECRET;
@@ -23,9 +24,14 @@ async function dbSet(path, value) {
   return r.ok;
 }
 
+async function dbDelete(path) {
+  const r = await fetch(dbPath(path), { method: 'DELETE' });
+  return r.ok;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -62,6 +68,12 @@ module.exports = async function handler(req, res) {
     });
 
     return res.json({ ok: true });
+  }
+
+  // ── DELETE: wipe entire leaderboard ──
+  if (req.method === 'DELETE') {
+    await dbDelete('leaderboard');
+    return res.json({ ok: true, wiped: true });
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
