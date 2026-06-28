@@ -441,7 +441,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
   <h1>⚽ FastForward FM</h1>
   <p class="sub">Kies je club en begin je seizoen</p>
   <div class="team-cards" id="team-cards"></div>
-  <p class="select-caption">Kies een zwakkere club voor een hogere multiplier. Deze blijft de héle carrière actief, ook als je team beter wordt!</p>
+  <p class="select-caption">Kies een club met een lagere begin-rating voor een hogere multiplier. Deze blijft de héLE carrière actief, ook als je team beter wordt!</p>
 </div>
 
 <!-- ══ MAIN GAME ══ -->
@@ -684,14 +684,14 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <span class="score-info-flag">🇳🇱</span>
         <div>
           <b>Hoe scoor je punten?</b><br>
-          Max 10 seizoenen tellen mee. Punten na Ronde 34. Punten worden vermenigvuldigd op basis van je START-team. Multiplier blijft de hele carrière gelijk (Top 3: x1 · Top 4-8: x1.25 · Top 9-15: x1.5 · Top 16-18: x2).
+          Max 10 seizoenen tellen mee. Punten na Ronde 34. Punten worden vermenigvuldigd op basis van je START-team. Multiplier blijft de hele carrière gelijk (Top 3: x1 · Top 4-6: x1.25 · Top 7-12: x1.5 · Top 13-18: x2).
         </div>
       </div>
       <div class="score-info-lang">
         <span class="score-info-flag">🇬🇧</span>
         <div>
           <b>How to score points?</b><br>
-          Max 10 seasons count. Points added after Round 34. Points multiplied by your STARTING team tier. Multiplier locked for entire career (Top 3: x1 · Top 4-8: x1.25 · Top 9-15: x1.5 · Top 16-18: x2).
+          Max 10 seasons count. Points added after Round 34. Points multiplied by your STARTING team tier. Multiplier locked for entire career (Top 3: x1 · Top 4-6: x1.25 · Top 7-12: x1.5 · Top 13-18: x2).
         </div>
       </div>
     </div>
@@ -1220,7 +1220,7 @@ function buildTeamSelect() {
       ${logoHtml}
       <div class="tc-name">${t.name}</div>
       <div class="tc-tier">Sterkte ${t.tier} · ${fmtMoney(t.budget)}</div>
-      <div class="tc-multi">${i<=2?"🏆 x1.0":i<=7?"⭐ x1.25":i<=14?"🔥 x1.5":"🔥 x2.0 — Max bonus!"}</div>
+      <div class="tc-multi">${i<=2?"🏆 Score Multiplier: x1.0":i<=5?"⭐ Score Multiplier: x1.25":i<=11?"🔥 Score Multiplier: x1.5":"🔥 Score Multiplier: x2.0 (Verdubbelaar!)"}</div>
       <div class="tc-bar"><div class="tc-bar-fill" style="width:${(t.tier-50)*2}%"></div></div>
     </div>`;
   }).join('');
@@ -1268,7 +1268,7 @@ function startGame(teamIdx) {
     careerLeaderboardPoints: 0,
     completedSeasons: 0,
     history:         [],
-    careerMultiplier: teamIdx<=2 ? 1.0 : teamIdx<=7 ? 1.25 : teamIdx<=14 ? 1.5 : 2.0,
+    careerMultiplier: teamIdx<=2 ? 1.0 : teamIdx<=5 ? 1.25 : teamIdx<=11 ? 1.5 : 2.0,
   };
 
   // Topbar
