@@ -621,7 +621,8 @@ async function launchGame(hasSave) {
         if (gameState && gameState.teams) {
           G = gameState;
           // Initialiseer velden die ontbreken in oude saves
-          G.plannedSubs = G.plannedSubs || [];
+          G.basePlannedSubs = G.basePlannedSubs || [];
+          G.plannedSubs     = G.plannedSubs     ?? null;
           G.topScorers  = G.topScorers  || {};
           G.matchLineup = G.matchLineup  || null;
           showScreen('main');
@@ -1078,7 +1079,7 @@ function playNextMatch() {
 
     if (isMyMatch) {
       const activeTeam = isMyHome ? homeTeam : awayTeam;
-      (G.plannedSubs || G.basePlannedSubs || []).slice(0,5).forEach((sub,i) => {
+      (G.plannedSubs !== null ? G.plannedSubs : (G.basePlannedSubs || [])).slice(0,5).forEach((sub,i) => {
         const outP=activeTeam.starters[sub.outIdx], inP=activeTeam.bench[sub.benchIdx];
         if (!outP||!inP) return;
         const minute=ri(55+i*6,85+i*2);
