@@ -244,6 +244,32 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .btn-sub-add:disabled { opacity: .4; cursor: not-allowed; }
 .btn-sub-rm { background: none; border: none; color: var(--red); cursor: pointer; font-size: 1rem; padding: 0 4px; line-height: 1; }
 
+/* ── SAVE FILE HUB ── */
+#screen-savefile { min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 24px; }
+.save-hero { font-size: 3.5rem; margin-bottom: 10px; }
+.save-title { font-size: 2rem; font-weight: 900; color: var(--gold); letter-spacing: 1px; margin-bottom: 4px; }
+.save-sub { font-size: 0.88rem; color: var(--dim); margin-bottom: 32px; }
+.save-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; max-width: 400px; width: 100%; position: relative; overflow: hidden; }
+.save-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--blue), var(--gold)); }
+.save-slot-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); margin-bottom: 14px; }
+.save-club-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.save-club-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 6px; }
+.save-club-logo-fallback { width: 48px; height: 48px; font-size: 2rem; display: flex; align-items: center; justify-content: center; }
+.save-club-name { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+.save-club-league { font-size: 0.8rem; color: var(--dim); margin-top: 2px; }
+.save-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+.save-meta-item { background: var(--panel2); border-radius: 8px; padding: 10px 12px; }
+.save-meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .8px; color: var(--dim); margin-bottom: 4px; }
+.save-meta-value { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.save-meta-value.gold { color: var(--gold); }
+.save-progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin: 6px 0 14px; overflow: hidden; }
+.save-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--blue), var(--gold)); transition: width .5s ease; }
+.btn-resume { display: block; width: 100%; background: var(--gold); color: #000; border: none; border-radius: 10px; padding: 16px; font-size: 1.1rem; font-weight: 900; cursor: pointer; letter-spacing: 1px; transition: all .15s; margin-bottom: 10px; }
+.btn-resume:hover { opacity: .88; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(240,165,0,.3); }
+.btn-save-newgame { display: block; width: 100%; background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 8px; padding: 10px; font-size: 0.85rem; cursor: pointer; transition: all .15s; }
+.btn-save-newgame:hover { border-color: var(--red); color: var(--red); }
+.save-inactivity-note { font-size: 0.75rem; color: var(--dim); text-align: center; margin-top: 18px; opacity: .7; }
+
 /* ── MATCH REPORT ── */
 .match-report { margin: 10px 0; }
 .report-half { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin: 10px 0 6px; font-weight: 700; }
@@ -427,6 +453,47 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     </div>
 
   </div>
+</div>
+
+<!-- ══ SAVE FILE HUB ══ -->
+<div id="screen-savefile" class="screen">
+  <div class="save-hero">⚽</div>
+  <div class="save-title">FastForward FM</div>
+  <div class="save-sub">Eredivisie Manager — Welkom terug</div>
+  <div class="save-card">
+    <div class="save-slot-label">📂 Opgeslagen Carrière</div>
+    <div class="save-club-row">
+      <img id="save-club-logo" src="" alt="" class="save-club-logo" style="display:none" onerror="this.style.display='none'">
+      <div id="save-club-logo-fb" class="save-club-logo-fallback">🏟️</div>
+      <div>
+        <div id="save-club-name" class="save-club-name">–</div>
+        <div class="save-club-league">Eredivisie</div>
+      </div>
+    </div>
+    <div class="save-meta-grid">
+      <div class="save-meta-item">
+        <div class="save-meta-label">Seizoen</div>
+        <div id="save-season" class="save-meta-value gold">1</div>
+      </div>
+      <div class="save-meta-item">
+        <div class="save-meta-label">Positie</div>
+        <div id="save-position" class="save-meta-value">–</div>
+      </div>
+      <div class="save-meta-item">
+        <div class="save-meta-label">Ronde</div>
+        <div id="save-round" class="save-meta-value">0 / 34</div>
+      </div>
+      <div class="save-meta-item">
+        <div class="save-meta-label">Budget</div>
+        <div id="save-budget" class="save-meta-value">–</div>
+      </div>
+    </div>
+    <div id="save-progress-label" style="font-size:.75rem;color:var(--dim);margin-bottom:2px">Voortgang seizoen</div>
+    <div class="save-progress-bar"><div class="save-progress-fill" id="save-progress-fill" style="width:0%"></div></div>
+    <button class="btn-resume" onclick="resumeFromSaveScreen()">▶ VERVOLG CARRIÈRE</button>
+    <button class="btn-save-newgame" onclick="newGameFromSaveScreen()">🔄 Nieuw spel</button>
+  </div>
+  <div class="save-inactivity-note" id="save-inactivity-note" style="display:none">🔒 Je sessie was inactief. Klik op Vervolg om verder te spelen.</div>
 </div>
 
 <!-- ══ MODAL: PRE-MATCH ══ -->
@@ -632,9 +699,9 @@ async function launchGame(hasSave) {
           G.plannedSubs     = G.plannedSubs     ?? null;
           G.topScorers  = G.topScorers  || {};
           G.matchLineup = G.matchLineup  || null;
-          showScreen('main');
           renderAll();
-          toast(`Welkom terug, ${CURRENT_USER.username}#${CURRENT_USER.tag}! 📂 Seizoen ${G.season}, Ronde ${G.round}`);
+          showSaveScreen(false);
+          startInactivityTimer();
           return;
         }
       } catch (e) { console.warn('Laden mislukt:', e); }
@@ -657,6 +724,75 @@ let selectedPlayer    = null;
 let _pid              = 100000;
 let NEGOTIATE_PID     = null;
 let NEGOTIATE_FROM_TEAM = null;
+
+// ══════════════════════════════════════════════════
+//  SAVE FILE HUB + INACTIVITY TIMER
+// ══════════════════════════════════════════════════
+
+var _inactivityTimer = null;
+var INACTIVITY_MS = 5 * 60 * 1000;
+
+function startInactivityTimer() {
+  clearTimeout(_inactivityTimer);
+  var reset = function() {
+    clearTimeout(_inactivityTimer);
+    _inactivityTimer = setTimeout(function() {
+      var main = document.getElementById('screen-main');
+      if (main && main.classList.contains('active')) showSaveScreen(true);
+    }, INACTIVITY_MS);
+  };
+  ['click','mousemove','keydown','touchstart'].forEach(function(ev) {
+    document.addEventListener(ev, reset, { passive: true });
+  });
+  reset();
+}
+
+function showSaveScreen(fromInactivity) {
+  if (!G || !G.myName) { showScreen('select'); return; }
+  var myTeam = G.teams ? G.teams.find(function(t){ return t.name === G.myName; }) : null;
+  var logoEl = document.getElementById('save-club-logo');
+  var logoFb = document.getElementById('save-club-logo-fb');
+  if (myTeam && myTeam.imageUrl) {
+    logoEl.src = myTeam.imageUrl;
+    logoEl.style.display = 'block';
+    logoFb.style.display = 'none';
+  } else {
+    logoEl.style.display = 'none';
+    logoFb.style.display = 'flex';
+  }
+  document.getElementById('save-club-name').textContent = G.myName || '–';
+  document.getElementById('save-season').textContent = String(G.season || 1);
+  var round = G.round || 0;
+  var total = G.totalRounds || 34;
+  document.getElementById('save-round').textContent = round + ' / ' + total;
+  if (G.teams) {
+    var sorted = G.teams.slice().sort(function(a,b){ return b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga); });
+    var pos = sorted.findIndex(function(t){ return t.name === G.myName; }) + 1;
+    document.getElementById('save-position').textContent = '#' + pos;
+  }
+  document.getElementById('save-budget').textContent = myTeam ? fmtMoney(myTeam.budget || 0) : '–';
+  var pct = total > 0 ? Math.round((round / total) * 100) : 0;
+  document.getElementById('save-progress-fill').style.width = pct + '%';
+  document.getElementById('save-progress-label').textContent = 'Voortgang: ' + round + ' van ' + total + ' rondes gespeeld';
+  var noteEl = document.getElementById('save-inactivity-note');
+  if (noteEl) noteEl.style.display = fromInactivity ? 'block' : 'none';
+  showScreen('savefile');
+}
+
+function resumeFromSaveScreen() {
+  showScreen('main');
+  startInactivityTimer();
+  var user = CURRENT_USER ? CURRENT_USER.username + '#' + CURRENT_USER.tag : '';
+  toast('Welkom terug, ' + user + '! 📂 Seizoen ' + (G.season || 1) + ', Ronde ' + (G.round || 0));
+}
+
+function newGameFromSaveScreen() {
+  if (!confirm('Weet je zeker dat je wilt stoppen? Je huidige voortgang gaat verloren.')) return;
+  clearTimeout(_inactivityTimer);
+  G = {};
+  buildTeamSelect();
+  showScreen('select');
+}
 
 // ══════════════════════════════════════════════════
 //  HELPERS
