@@ -49,6 +49,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .tc-logo-fallback { font-size: 2.2rem; margin-bottom: 8px; }
 .tc-name { font-weight: 700; margin-bottom: 6px; font-size: 0.92rem; }
 .tc-tier { font-size: 0.77rem; color: var(--dim); }
+.tc-multi { font-size: 0.73rem; font-weight: 700; color: #f5c518; margin-top: 3px; letter-spacing: 0.02em; }
+.select-caption { text-align: center; font-size: 0.78rem; color: var(--dim); margin: 6px 12px 0; }
 .tc-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; }
 .tc-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--blue), var(--gold)); }
 
@@ -439,6 +441,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
   <h1>⚽ FastForward FM</h1>
   <p class="sub">Kies je club en begin je seizoen</p>
   <div class="team-cards" id="team-cards"></div>
+  <p class="select-caption">Kies een zwakkere club voor een hogere multiplier. Deze blijft de héle carrière actief, ook als je team beter wordt!</p>
 </div>
 
 <!-- ══ MAIN GAME ══ -->
@@ -681,18 +684,14 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <span class="score-info-flag">🇳🇱</span>
         <div>
           <b>Hoe scoor je punten?</b><br>
-          Elke carrière is uniek. Punten worden aan het einde van elk seizoen (Ronde 34) toegevoegd.<br>
-          <b>Eindstand:</b> Top 10 krijgt punten — Kampioen = 1000 ptn, plek 10 = 100 ptn.<br>
-          <b>Topscorers:</b> Plek 1 t/m 10 levert je 10 tot 1 ptn op per eigen speler in de lijst.
+          Max 10 seizoenen tellen mee. Punten na Ronde 34. Punten worden vermenigvuldigd op basis van je START-team. Multiplier blijft de hele carrière gelijk (Top 3: x1 · Top 4-8: x1.25 · Top 9-15: x1.5 · Top 16-18: x2).
         </div>
       </div>
       <div class="score-info-lang">
         <span class="score-info-flag">🇬🇧</span>
         <div>
           <b>How to score points?</b><br>
-          Every career is unique. Points are added at the end of each completed season (Round 34).<br>
-          <b>League Rank:</b> Top 10 earns points — Champion = 1000 pts, 10th place = 100 pts.<br>
-          <b>Top Scorers:</b> Positions 1–10 earn you 10 to 1 pts per own player on the list.
+          Max 10 seasons count. Points added after Round 34. Points multiplied by your STARTING team tier. Multiplier locked for entire career (Top 3: x1 · Top 4-8: x1.25 · Top 9-15: x1.5 · Top 16-18: x2).
         </div>
       </div>
     </div>
@@ -840,6 +839,7 @@ async function launchGame(hasSave) {
         G.matchLineup             = G.matchLineup             || null;
         G.careerLeaderboardPoints = G.careerLeaderboardPoints || 0;
         G.completedSeasons        = G.completedSeasons        || 0;
+        G.careerMultiplier        = G.careerMultiplier        || 1;
         G.results                 = G.results                 || [];
         renderAll();
         showSaveScreen(false);
@@ -1220,6 +1220,7 @@ function buildTeamSelect() {
       ${logoHtml}
       <div class="tc-name">${t.name}</div>
       <div class="tc-tier">Sterkte ${t.tier} · ${fmtMoney(t.budget)}</div>
+      <div class="tc-multi">${i<=2?"🏆 x1.0":i<=7?"⭐ x1.25":i<=14?"🔥 x1.5":"🔥 x2.0 — Max bonus!"}</div>
       <div class="tc-bar"><div class="tc-bar-fill" style="width:${(t.tier-50)*2}%"></div></div>
     </div>`;
   }).join('');
@@ -1267,6 +1268,7 @@ function startGame(teamIdx) {
     careerLeaderboardPoints: 0,
     completedSeasons: 0,
     history:         [],
+    careerMultiplier: teamIdx<=2 ? 1.0 : teamIdx<=7 ? 1.25 : teamIdx<=14 ? 1.5 : 2.0,
   };
 
   // Topbar
@@ -2152,7 +2154,8 @@ async function newSeason() {
   var _lbPts = calcLeaderboardPoints();
   // ── Leaderboard cap: max 10 seizoenen ──
   if ((G.completedSeasons || 0) < 10) {
-    G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + _lbPts.total;
+    const _mult = G.careerMultiplier || 1;
+    G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + Math.round(_lbPts.total * _mult);
   }
   G.completedSeasons        = (G.completedSeasons || 0) + 1;
 
