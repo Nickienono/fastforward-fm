@@ -1739,7 +1739,7 @@ function makeOffer(factor, askingPrice) {
     G.scoutAttempts[pid] = _sa - 1;
   }
   let sc=factor>=1.20?0.98:factor>=1.00?0.90:factor>=0.85?0.55:0.20;
-  closeNegotiation();
+  closeNegotiation(); renderTransfers();
   if (Math.random()<sc) {
     let player=null;
     if (!fromT) {
