@@ -2198,7 +2198,7 @@ function newSeason() {
   renderStandings();
   const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
     pushLeaderboard();
-  toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeM + 'M — +' + _lbPts.total + ' LB punten 🏆');
+  toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts.total + ' LB punten 🏆');
 }
 
 // ══════════════════════════════════════════════════
