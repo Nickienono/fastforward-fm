@@ -2118,7 +2118,7 @@ function calcPlayerValue(rating, age) {
   return Math.round(val * 20) / 20;   // rounded to nearest €0.05M
 }
 
-function newSeason() {
+async function newSeason() {
   // ── 0. Bereken leaderboard-punten voor dit seizoen ──
   var _lbPts = calcLeaderboardPoints();
   G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + _lbPts.total;
@@ -2204,12 +2204,12 @@ function newSeason() {
   G.schedule    = buildSchedule(G.teams.map(t => t.name));
   G.totalRounds = G.schedule.length;
   G.market      = generateMarket();
-  saveGame();
+  await saveGame();
   showTab('dashboard');
   renderDashboard();
   renderStandings();
   const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
-    pushLeaderboard();
+    await pushLeaderboard();
   toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts.total + ' LB punten 🏆');
 }
 
