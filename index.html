@@ -588,17 +588,10 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <span class="score-info-flag">🇳🇱</span>
         <div>
           <b>Hoe scoor je punten?</b><br>
-          Elke carrière is uniek. Punten worden aan het einde van elk seizoen (Ronde 34) toegevoegd.<br>
-          <b>Eindstand:</b> Top 10 krijgt punten — Kampioen = 1000 ptn, plek 10 = 100 ptn.<br>
-          <b>Topscorers:</b> Plek 1 t/m 10 levert je 10 tot 1 ptn op per eigen speler in de lijst.
-        </div>
-      </div>
-      <div class="score-info-lang">
-        <span class="score-info-flag">🇬🇧</span>
-        <div>
-          <b>How to score points?</b><br>
-          Every career is unique. Points are added at the end of each completed season (Round 34).<br>
-          <b>League Rank:</b> Top 10 earns points — Champion = 1000 pts, 10th place = 100 pts.<br>
+               Elke carrière is uniek. Maximaal 10 seizoenen tellen mee voor de highscore! Punten worden toegevoegd na Ronde 34.<br>
+          <b>Eindstand Top 10</b> = 1000 tot 100 ptn. <b>Topscorers Top 10</b> = 10 tot 1 ptn per speler.
+          Every career is unique. A maximum of 10 seasons count towards your highscore! Points added after Round 34.<br>
+          <b>League Top 10</b> = 1000 to 100 pts. <b>Top Scorers Top 10</b> = 10 to 1 pt per player.
           <b>Top Scorers:</b> Positions 1–10 earn you 10 to 1 pts per own player on the list.
         </div>
       </div>
@@ -1530,7 +1523,7 @@ function generateMarket() {
   const pos = ['K','V','V','V','M','M','M','A','A','A'];
   return pos.map(p => {
     const r = ri(58, 85);
-    return { id: ++_pid, name: randomName(), pos: p, rating: r,
+    return { id: ++_pid, attemptsLeft: 8, name: randomName(), pos: p, rating: r,
              fitness: ri(80,100), value: calcValue(r), club: 'Vrije agent' };
   });
 }
@@ -1557,7 +1550,22 @@ function sellPlayer(pid) {
   const total = myTeam.starters.length + myTeam.bench.length;
   if (total <= 11) { toast('Selectie te klein om te verkopen!'); return; }
   if (!fromBench && myTeam.bench.length === 0) { toast('Geen wisselspeler beschikbaar!'); return; }
-  myTeam.budget += p.value;
+  // ── Zoek AI-club die de speler kan kopen ──
+  const _aiCandidates = G.teams.filter(t => !t.isMe && (t.budget||0) >= p.value);
+  _aiCandidates.sort((a,b) => b.budget - a.budget);
+  if (_aiCandidates.length > 0) {
+    const _buyer = _aiCandidates[0];
+    _buyer.budget  -= p.value;
+    p.team          = _buyer.name;
+    p.goals         = 0; p.assists = 0;
+    if (!_buyer.bench) _buyer.bench = [];
+    _buyer.bench.push(p);
+    myTeam.budget  += p.value;
+    toast('✅ ' + p.name + ' verkocht aan ' + _buyer.name + ' voor €' + (p.value/1e6).toFixed(1) + 'M!');
+  } else {
+    myTeam.budget  += p.value;
+    toast('✅ ' + p.name + ' verkocht (geen club kon betalen) voor €' + (p.value/1e6).toFixed(1) + 'M.');
+  }
   arr.splice(idx, 1);
   if (!fromBench && myTeam.bench.length > 0) {
     const sub = myTeam.bench.shift();
@@ -1646,6 +1654,11 @@ function selectBenchPlayer(idx) {
 // ══════════════════════════════════════════════════
 
 function openNegotiation(pid, fromTeamName) {
+  // ── Transfer cap check ──
+  if ((G.transfersThisSeason||0) >= 20) {
+    toast('❌ Maximum 20 transfers bereikt voor dit seizoen!');
+    return;
+  }
   const myTeam = G.teams.find(t => t.name===G.myName);
   let player = null;
   if (!fromTeamName) {
@@ -1684,10 +1697,24 @@ function closeNegotiation() {
 }
 
 function makeOffer(factor, askingPrice) {
+  // ── Transfer cap: max 20 per seizoen ──
+  if ((G.transfersThisSeason||0) >= 20) {
+    toast('❌ Je hebt het maximum van 20 transfers voor dit seizoen bereikt!');
+    return;
+  }
   const myTeam=G.teams.find(t=>t.name===G.myName);
   const offer=Math.round(askingPrice*factor);
   if (myTeam.budget<offer){toast('Onvoldoende budget!');return;}
   const pid=NEGOTIATE_PID, fromT=NEGOTIATE_FROM_TEAM;
+  // ── Attempt token check (max 8 pogingen per speler) ──
+  const _mktP = G.market.find(p => p.id === pid);
+  if (_mktP) {
+    if ((_mktP.attemptsLeft ?? 8) <= 0) {
+      toast('❌ Onderhandelingen definitief mislukt voor deze speler!');
+      renderTransfers(); return;
+    }
+    _mktP.attemptsLeft = (_mktP.attemptsLeft ?? 8) - 1;
+  }
   let sc=factor>=1.20?0.98:factor>=1.00?0.90:factor>=0.85?0.55:0.20;
   closeNegotiation();
   if (Math.random()<sc) {
@@ -1706,7 +1733,9 @@ function makeOffer(factor, askingPrice) {
     if (player){
       myTeam.budget-=offer;
       player.club=G.myName; player.baseRating=player.baseRating||player.rating;
-      myTeam.bench.push(player); renderAll(); saveGame();
+      myTeam.bench.push(player); renderAll();
+      G.transfersThisSeason = (G.transfersThisSeason||0) + 1;
+      saveGame();
       toast('✅ '+player.name+' gekocht voor '+fmtMoney(offer)+'!');
     }
   } else {
@@ -2121,7 +2150,10 @@ function calcPlayerValue(rating, age) {
 async function newSeason() {
   // ── 0. Bereken leaderboard-punten voor dit seizoen ──
   var _lbPts = calcLeaderboardPoints();
-  G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + _lbPts.total;
+  // ── Leaderboard cap: max 10 seizoenen ──
+  if ((G.completedSeasons || 0) < 10) {
+    G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + _lbPts.total;
+  }
   G.completedSeasons        = (G.completedSeasons || 0) + 1;
 
   // 1. Archiveer seizoen naar Hall of Fame
@@ -2183,6 +2215,7 @@ async function newSeason() {
 
   // 4. Reset seizoensstatus
   document.getElementById('modal-season').classList.remove('open');
+  G.transfersThisSeason = 0;  // reset bij nieuw seizoen
   G.season++;
   G.round   = 0;
   G.results = [];
