@@ -270,6 +270,18 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .btn-save-newgame:hover { border-color: var(--red); color: var(--red); }
 .save-inactivity-note { font-size: 0.75rem; color: var(--dim); text-align: center; margin-top: 18px; opacity: .7; }
 
+/* ── LEADERBOARD ── */
+.lb-wrap { max-width: 420px; width: 100%; margin-top: 18px; }
+.lb-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.lb-table th { text-align: left; padding: 6px 8px; font-size: .7rem; text-transform: uppercase; letter-spacing:.6px; color: var(--dim); border-bottom: 1px solid var(--border); }
+.lb-table td { padding: 7px 8px; border-bottom: 1px solid rgba(48,54,61,.4); }
+.lb-table tr:last-child td { border-bottom: none; }
+.lb-table tr.me td { background: rgba(240,165,0,.07); }
+.lb-table tr.me td:first-child { border-left: 2px solid var(--gold); }
+.lb-pts { font-weight: 700; color: var(--gold); text-align: right; }
+.lb-ctr { text-align: center; color: var(--dim); }
+.lb-empty { color: var(--dim); font-size: .82rem; text-align: center; padding: 18px 0; }
+
 /* ── MATCH REPORT ── */
 .match-report { margin: 10px 0; }
 .report-half { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin: 10px 0 6px; font-weight: 700; }
@@ -375,6 +387,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <button onclick="showTab('opstelling')">👥 Basis Opstelling</button>
     <button onclick="showTab('transfers')">💸 Transfers</button>
     <button onclick="showTab('topscorers')">🥇 Topscorers</button>
+    <button onclick="showLeaderboard()">🌍 Ranglijst</button>
   </nav>
   <div class="content">
 
@@ -493,6 +506,10 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <button class="btn-resume" onclick="resumeFromSaveScreen()">▶ VERVOLG CARRIÈRE</button>
     <button class="btn-save-newgame" onclick="newGameFromSaveScreen()">🔄 Nieuw spel</button>
   </div>
+  <div class="lb-wrap" id="save-lb-wrap" style="display:none">
+    <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 0 8px">🌍 Globale Ranglijst</div>
+    <div id="save-lb-list" class="save-card" style="padding:4px 0;overflow:hidden"><div class="lb-empty">Laden…</div></div>
+  </div>
   <div class="save-inactivity-note" id="save-inactivity-note" style="display:none">🔒 Je sessie was inactief. Klik op Vervolg om verder te spelen.</div>
 </div>
 
@@ -562,6 +579,16 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div id="neg-warn" class="neg-budget-warn" style="display:none"></div>
     <div class="modal-footer" style="justify-content:flex-start;margin-top:10px">
       <button class="btn-newgame" onclick="closeNegotiation()">✕ Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-leaderboard">
+  <div class="modal modal-wide">
+    <h2>🌍 Globale Ranglijst</h2>
+    <div id="lb-modal-list"><div class="lb-empty">Laden…</div></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="document.getElementById('modal-leaderboard').classList.remove('open')">✕ Sluiten</button>
     </div>
   </div>
 </div>
@@ -696,6 +723,10 @@ async function launchGame(hasSave) {
           // Initialiseer velden die ontbreken in oude saves
           G.history         = G.history         || [];
           G.basePlannedSubs = G.basePlannedSubs || [];
+          G.careerId                = G.careerId                || (Date.now().toString(36) + Math.random().toString(36).slice(2));
+          G.careerLeaderboardPoints = G.careerLeaderboardPoints || 0;
+          G.completedSeasons        = G.completedSeasons        || 0;
+          G.history                 = G.history                 || [];
           G.plannedSubs     = G.plannedSubs     ?? null;
           G.topScorers  = G.topScorers  || {};
           G.matchLineup = G.matchLineup  || null;
@@ -776,6 +807,9 @@ function showSaveScreen(fromInactivity) {
   document.getElementById('save-progress-label').textContent = 'Voortgang: ' + round + ' van ' + total + ' rondes gespeeld';
   var noteEl = document.getElementById('save-inactivity-note');
   if (noteEl) noteEl.style.display = fromInactivity ? 'block' : 'none';
+    // Show leaderboard panel
+  var lbWrap = document.getElementById('save-lb-wrap');
+  if (lbWrap) { lbWrap.style.display = 'block'; loadLeaderboard('save-lb-list'); }
   showScreen('savefile');
 }
 
@@ -792,6 +826,76 @@ function newGameFromSaveScreen() {
   G = {};
   buildTeamSelect();
   showScreen('select');
+}
+
+// ══════════════════════════════════════════════════
+//  LEADERBOARD
+// ══════════════════════════════════════════════════
+
+function calcLeaderboardPoints() {
+  var standings = G.teams.slice().sort(function(a,b){ return b.points-a.points||(b.gf-b.ga)-(a.gf-a.ga); });
+  var myRank = standings.findIndex(function(t){ return t.isMe; }) + 1;
+  var posPoints = (myRank >= 1 && myRank <= 10) ? (11 - myRank) * 100 : 0;
+  var scorerArr = Object.keys(G.topScorers||{}).map(function(name){
+    return Object.assign({ name: name }, G.topScorers[name]);
+  }).sort(function(a,b){ return b.goals-a.goals||b.assists-a.assists; });
+  var scorerPoints = 0;
+  scorerArr.slice(0,10).forEach(function(entry, i){
+    if (entry.team === G.myName) scorerPoints += (10 - i);
+  });
+  return { posPoints: posPoints, scorerPoints: scorerPoints, total: posPoints + scorerPoints, rank: myRank };
+}
+
+async function pushLeaderboard() {
+  if (!G.careerId || !CURRENT_USER) return;
+  try {
+    await fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        careerId:   G.careerId,
+        playerName: CURRENT_USER.username,
+        club:       G.myName,
+        seasons:    G.completedSeasons || 0,
+        points:     G.careerLeaderboardPoints || 0
+      })
+    });
+  } catch(e) { console.warn('Leaderboard push mislukt:', e); }
+}
+
+async function loadLeaderboard(targetId) {
+  var el = document.getElementById(targetId || 'save-lb-list');
+  if (!el) return;
+  el.innerHTML = '<div class="lb-empty">Laden…</div>';
+  try {
+    var res = await fetch('/api/leaderboard');
+    var data = await res.json();
+    renderLeaderboard(data.entries || [], targetId);
+  } catch(e) {
+    el.innerHTML = '<div class="lb-empty">Niet beschikbaar</div>';
+  }
+}
+
+function renderLeaderboard(entries, targetId) {
+  var el = document.getElementById(targetId || 'save-lb-list');
+  if (!el) return;
+  if (!entries || !entries.length) {
+    el.innerHTML = '<div class="lb-empty">Nog geen vermeldingen</div>';
+    return;
+  }
+  var myCareerId = (typeof G !== 'undefined' && G.careerId) ? G.careerId : '';
+  el.innerHTML = '<table class="lb-table"><thead><tr><th>#</th><th>Naam</th><th>Club</th><th class="lb-ctr">Sz</th><th class="lb-pts">Punten</th></tr></thead><tbody>' +
+    entries.map(function(e, i) {
+      var cls = e.careerId === myCareerId ? ' class="me"' : '';
+      return '<tr' + cls + '><td style="color:var(--dim)">' + (i+1) + '</td><td><b>' + e.playerName + '</b></td><td style="color:var(--dim)">' + e.club + '</td><td class="lb-ctr">' + e.seasons + '</td><td class="lb-pts">' + (e.points||0).toLocaleString('nl-NL') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+async function showLeaderboard() {
+  var modal = document.getElementById('modal-leaderboard');
+  if (!modal) return;
+  modal.classList.add('open');
+  await loadLeaderboard('lb-modal-list');
 }
 
 // ══════════════════════════════════════════════════
@@ -1039,6 +1143,10 @@ function startGame(teamIdx) {
     plannedSubs: null,  // eenmalige override (null = gebruik basePlannedSubs)
     matchLineup: null,
     topScorers:  {},
+    careerId:    Date.now().toString(36) + Math.random().toString(36).slice(2),
+    careerLeaderboardPoints: 0,
+    completedSeasons: 0,
+    history:         [],
   };
 
   // Topbar
@@ -1860,6 +1968,11 @@ function showSeasonEnd() {
 }
 
 function newSeason() {
+  // ── 0. Bereken leaderboard-punten voor dit seizoen ──
+  var _lbPts = calcLeaderboardPoints();
+  G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + _lbPts.total;
+  G.completedSeasons        = (G.completedSeasons || 0) + 1;
+
   // 1. Archiveer seizoen naar Hall of Fame
   G.history = G.history || [];
   const standings = [...G.teams].sort((a,b) => b.points - a.points || (b.gf-b.ga) - (a.gf-a.ga));
@@ -1920,7 +2033,8 @@ function newSeason() {
   renderDashboard();
   renderStandings();
   const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
-  toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M prijzengeld 🏆');
+    pushLeaderboard();
+  toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeM + 'M — +' + _lbPts.total + ' LB punten 🏆');
 }
 
 // ══════════════════════════════════════════════════
