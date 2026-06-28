@@ -64,6 +64,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .topbar .round b { color: var(--gold); font-size: 1rem; }
 .btn-newgame { background: none; border: 1px solid var(--border); color: var(--dim); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all .15s; }
 .btn-newgame:hover { border-color: var(--red); color: var(--red); }
+.btn-newgame--abandon { border-color: var(--red) !important; color: var(--red) !important; }
+.btn-newgame--abandon:hover { background: var(--red) !important; color: #fff !important; }
 
 /* ── LOGIN ── */
 #screen-login { min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; }
@@ -449,7 +451,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div class="stat">💰 <b id="top-budget">–</b></div>
     <div class="stat">📊 <b id="top-pos">–</b>e</div>
     <div class="round">Ronde <b id="top-round">0</b>/<span id="top-round-total">34</span></div>
-    <button class="btn-newgame" onclick="resetGame()" title="Terug naar clubkeuze">🔄 Nieuw spel</button>
+    <button class="btn-newgame btn-newgame--abandon" onclick="abandonCareer()" title="Geef carrière op">❌ Carrière Op</button>
   </div>
   <nav>
     <button class="active" data-desktop="🏠 Dashboard"        data-mobile="DASH"  onclick="showTab('dashboard')"></button>
