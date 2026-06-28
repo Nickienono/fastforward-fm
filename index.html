@@ -51,6 +51,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .tc-tier { font-size: 0.77rem; color: var(--dim); }
 .tc-multi { font-size: 0.73rem; font-weight: 700; color: #f5c518; margin-top: 3px; letter-spacing: 0.02em; }
 .select-caption { text-align: center; font-size: 0.78rem; color: var(--dim); margin: 6px 12px 0; }
+.tm-cap-badge { display:inline-block; padding:5px 12px; border-radius:8px; font-size:.82rem; font-weight:600; background:rgba(255,255,255,.07); color:var(--accent,#7eb3ff); margin-bottom:10px; width:100%; box-sizing:border-box; }
+.tm-cap-full { background:rgba(220,50,50,.18) !important; color:#ff6b6b !important; animation:tm-flash 1s ease-in-out infinite; }
+@keyframes tm-flash { 0%,100%{opacity:1} 50%{opacity:.45} }
+.tm-token { font-size:.72rem; color:var(--dim); margin:2px 0 5px; text-align:right; }
 .tc-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; }
 .tc-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--blue), var(--gold)); }
 
@@ -530,6 +534,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
           <option>K</option><option>V</option><option>M</option><option>A</option>
         </select>
       </div>
+      <div id="transfer-cap-bar"></div>
       <div class="tf-grid" id="market-grid"></div>
       <div style="margin-top:20px">
         <div class="section-title">🔍 Andere Clubs – Scout & Koop</div>
@@ -1987,6 +1992,9 @@ function renderOpsteliling() {
 }
 
 function renderTransfers() {
+  const _done = G.transfersThisSeason || 0;
+  const _capEl = document.getElementById('transfer-cap-bar');
+  if (_capEl) { _capEl.innerHTML = '<span class="tm-cap-badge'+(_done>=20?' tm-cap-full':'')+'">💼 Transfers dit seizoen: '+_done+' / 20 gedaan</span>'; }
   const myTeam = G.teams.find(t => t.name === G.myName);
   const search = (document.getElementById('tf-search')?.value||'').toLowerCase();
   const posF   = document.getElementById('tf-pos')?.value||'';
@@ -2000,7 +2008,8 @@ function renderTransfers() {
         +'<div class="tf-meta">'+p.pos+' · '+p.fitness+'% fit · '+fmtMoney(p.value)+'</div>'
         +'<div style="font-size:.7rem;color:var(--dim)">Vrije agent</div></div>'
         +'<div class="tf-rating">'+p.rating+'</div>'
-        +'<button class="btn-buy" onclick="openNegotiation('+p.id+',null)">Onderhandelen</button></div>'
+        +'<div class="tm-token">🔄 '+(p.attemptsLeft!==undefined?p.attemptsLeft:8)+' / 8 pogingen over</div>'
+        +'<button class="btn-buy"'+(p.attemptsLeft===0||(G.transfersThisSeason||0)>=20?' disabled':'')+' onclick="openNegotiation('+p.id+',null)">'+(p.attemptsLeft===0?'❌ Afgebroken':(G.transfersThisSeason||0)>=20?'🔒 Markt Gesloten':'Onderhandelen')+'</button></div>'
       ).join('')
     : '<p style="color:var(--dim);font-size:.85rem">Geen vrije agenten gevonden.</p>';
 
