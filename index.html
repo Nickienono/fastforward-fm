@@ -388,6 +388,18 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <div id="sub-plan-rows"></div>
         <button class="btn-sub-add" id="btn-add-sub" onclick="addPlannedSub()">+ Wissel toevoegen</button>
       </div>
+
+      <!-- Dropdown wissel sectie -->
+      <div style="margin-top:16px;padding:14px;background:var(--panel);border:1px solid var(--border);border-radius:10px">
+        <h3 style="font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:10px">🔄 Wissel via selectie</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:.78rem;color:var(--dim)">Veldspeler eruit:</div>
+          <select id="basis-out-sel" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;width:100%"></select>
+          <div style="font-size:.78rem;color:var(--dim)">Bankspeler erin:</div>
+          <select id="basis-in-sel" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;width:100%"></select>
+          <button onclick="doBaseSwap()" style="background:var(--green);border:none;border-radius:6px;color:#fff;padding:9px;cursor:pointer;font-size:.85rem;font-weight:700;margin-top:4px">✓ Wissel bevestigen</button>
+        </div>
+      </div>
     </div>
 
     <!-- TAB: TOPSCORERS -->
@@ -1448,6 +1460,49 @@ function renderSeasonStats() {
     <div class="stat-row"><span class="label">Seizoen</span><span class="val">${G.season}</span></div>`;
 }
 
+function fillBaseSwapDropdowns() {
+  const myTeam = G.teams.find(t => t.name === G.myName);
+  if (!myTeam) return;
+  const outSel = document.getElementById('basis-out-sel');
+  const inSel  = document.getElementById('basis-in-sel');
+  if (!outSel || !inSel) return;
+  outSel.innerHTML = myTeam.starters.map((p, i) =>
+    '<option value="s:' + i + '">' + p.name + ' (' + p.pos + ') — Veld</option>'
+  ).join('') + myTeam.bench.map((p, i) =>
+    '<option value="b:' + i + '">' + p.name + ' (' + p.pos + ') — Bank</option>'
+  ).join('');
+  inSel.innerHTML = myTeam.bench.map((p, i) =>
+    '<option value="b:' + i + '">' + p.name + ' (' + p.pos + ') — Bank</option>'
+  ).join('') + myTeam.starters.map((p, i) =>
+    '<option value="s:' + i + '">' + p.name + ' (' + p.pos + ') — Veld</option>'
+  ).join('');
+}
+
+function doBaseSwap() {
+  const myTeam = G.teams.find(t => t.name === G.myName);
+  const outVal = document.getElementById('basis-out-sel')?.value;
+  const inVal  = document.getElementById('basis-in-sel')?.value;
+  if (!outVal || !inVal || outVal === inVal) { toast('Kies twee verschillende spelers!'); return; }
+  const parse = v => ({ from: v.split(':')[0], idx: parseInt(v.split(':')[1]) });
+  const out = parse(outVal);
+  const inn = parse(inVal);
+  const getArr = f => f === 's' ? myTeam.starters : myTeam.bench;
+  const p1 = getArr(out.from)[out.idx];
+  const p2 = getArr(inn.from)[inn.idx];
+  if (out.from === 's' && inn.from === 'b') {
+    [myTeam.starters[out.idx], myTeam.bench[inn.idx]] = [myTeam.bench[inn.idx], myTeam.starters[out.idx]];
+  } else if (out.from === 'b' && inn.from === 's') {
+    [myTeam.bench[out.idx], myTeam.starters[inn.idx]] = [myTeam.starters[inn.idx], myTeam.bench[out.idx]];
+  } else if (out.from === 's' && inn.from === 's') {
+    [myTeam.starters[out.idx], myTeam.starters[inn.idx]] = [myTeam.starters[inn.idx], myTeam.starters[out.idx]];
+  } else {
+    [myTeam.bench[out.idx], myTeam.bench[inn.idx]] = [myTeam.bench[inn.idx], myTeam.bench[out.idx]];
+  }
+  saveGame();
+  toast('✅ ' + p1.name + ' ↔ ' + p2.name);
+  renderOpsteliling();
+}
+
 function renderOpsteliling() {
   const myTeam = G.teams.find(t => t.name === G.myName);
   const rows = [
@@ -1491,6 +1546,7 @@ function renderOpsteliling() {
     hintEl.style.color = selectedPlayer ? 'var(--gold)' : 'var(--dim)';
   }
   renderSubPlan();
+  fillBaseSwapDropdowns();
 }
 
 function renderSubPlan() {
