@@ -295,8 +295,8 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .save-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--blue), var(--gold)); transition: width .5s ease; }
 .btn-resume { display: block; width: 100%; background: var(--gold); color: #000; border: none; border-radius: 10px; padding: 16px; font-size: 1.1rem; font-weight: 900; cursor: pointer; letter-spacing: 1px; transition: all .15s; margin-bottom: 10px; }
 .btn-resume:hover { opacity: .88; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(240,165,0,.3); }
-.btn-save-newgame { display: block; width: 100%; background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 8px; padding: 10px; font-size: 0.85rem; cursor: pointer; transition: all .15s; }
-.btn-save-newgame:hover { border-color: var(--red); color: var(--red); }
+.btn-abandon-career { display: block; width: 100%; background: none; border: 2px solid var(--red); color: var(--red); border-radius: 10px; padding: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: all .15s; }
+.btn-abandon-career:hover { background: var(--red); color: #fff; }
 .save-inactivity-note { font-size: 0.75rem; color: var(--dim); text-align: center; margin-top: 18px; opacity: .7; }
 
 /* ── SCORE INFO ── */
@@ -573,7 +573,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div id="save-progress-label" style="font-size:.75rem;color:var(--dim);margin-bottom:2px">Voortgang seizoen</div>
     <div class="save-progress-bar"><div class="save-progress-fill" id="save-progress-fill" style="width:0%"></div></div>
     <button class="btn-resume" onclick="resumeFromSaveScreen()">▶ VERVOLG CARRIÈRE</button>
-    <button class="btn-save-newgame" onclick="newGameFromSaveScreen()">🔄 Nieuw spel</button>
+    <button class="btn-abandon-career" onclick="abandonCareer()">❌ Geef Carrière Op</button>
   </div>
   <div class="lb-wrap" id="save-lb-wrap" style="display:none">
     <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 0 8px">🌍 Globale Ranglijst</div>
@@ -829,33 +829,33 @@ async function continueAfterNew() {
 async function launchGame(hasSave) {
   showScreen('loading');
   await loadEredivisieData(async () => {
-    if (hasSave) {
-      try {
-        const res = await fetch(`/api/load?username=${encodeURIComponent(CURRENT_USER.username)}&tag=${encodeURIComponent(CURRENT_USER.tag)}`);
-        const { gameState } = await res.json();
-        if (gameState && gameState.teams) {
-          G = gameState;
-          // Initialiseer velden die ontbreken in oude saves
-          G.history         = G.history         || [];
-          G.basePlannedSubs = G.basePlannedSubs || [];
-          G.careerId                = G.careerId                || (Date.now().toString(36) + Math.random().toString(36).slice(2));
-          G.careerLeaderboardPoints = G.careerLeaderboardPoints || 0;
-          G.completedSeasons        = G.completedSeasons        || 0;
-          G.history                 = G.history                 || [];
-          G.plannedSubs     = G.plannedSubs     ?? null;
-          G.topScorers  = G.topScorers  || {};
-          G.matchLineup = G.matchLineup  || null;
-          renderAll();
-          showSaveScreen(false);
-          startInactivityTimer();
-          return;
-        }
-      } catch (e) { console.warn('Laden mislukt:', e); }
-    }
+    // ── Carrière lock: altijd proberen te laden, nooit naar teamselect als carrière bestaat ──
+    try {
+      const res = await fetch(`/api/load?username=${encodeURIComponent(CURRENT_USER.username)}&tag=${encodeURIComponent(CURRENT_USER.tag)}`);
+      const { gameState } = await res.json();
+      if (gameState && gameState.myName) {
+        G = gameState;
+        // Velden initialiseren die ontbreken in oude saves
+        G.careerId                = G.careerId                || (Date.now().toString(36) + Math.random().toString(36).slice(2));
+        G.season                  = G.season                  || 1;
+        G.history                 = G.history                 || [];
+        G.basePlannedSubs         = G.basePlannedSubs         || [];
+        G.plannedSubs             = G.plannedSubs             ?? null;
+        G.topScorers              = G.topScorers              || {};
+        G.matchLineup             = G.matchLineup             || null;
+        G.careerLeaderboardPoints = G.careerLeaderboardPoints || 0;
+        G.completedSeasons        = G.completedSeasons        || 0;
+        G.results                 = G.results                 || [];
+        renderAll();
+        showSaveScreen(false);
+        startInactivityTimer();
+        return;
+      }
+    } catch (e) { console.warn('Laden mislukt:', e); }
+    // Alleen team-select als er echt geen carrière is
     showScreen('select');
   });
 }
-
 async function saveGame() {
   if (!CURRENT_USER || !G || !G.teams) return;
   try {
@@ -935,9 +935,19 @@ function resumeFromSaveScreen() {
   toast('Welkom terug, ' + user + '! 📂 Seizoen ' + (G.season || 1) + ', Ronde ' + (G.round || 0));
 }
 
-function newGameFromSaveScreen() {
-  if (!confirm('Weet je zeker dat je wilt stoppen? Je huidige voortgang gaat verloren.')) return;
+async function abandonCareer() {
+  if (!confirm('Weet je zeker dat je deze carrière wilt opgeven? Je verliest al je huidige voortgang!')) return;
   clearTimeout(_inactivityTimer);
+  // Sla lege staat op (leaderboard entries blijven intact)
+  if (CURRENT_USER) {
+    try {
+      await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: CURRENT_USER.username, tag: CURRENT_USER.tag, gameState: {} }),
+      });
+    } catch(e) {}
+  }
   G = {};
   buildTeamSelect();
   showScreen('select');
