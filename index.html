@@ -1736,7 +1736,7 @@ function newSeason() {
   standings.forEach((team, idx) => {
     const rank  = idx + 1;
     const prize = Math.max(500000, (nTeams - rank + 1) * 1000000);
-    if (team.isMe) { G.budget += prize; }
+    if (team.isMe) { team.budget = (team.budget || 0) + prize; }
     else           { team.budget = (team.budget || 0) + prize; }
   });
 
