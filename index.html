@@ -84,10 +84,39 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .login-user-badge span { color: var(--gold); font-weight: 700; }
 
 /* ── NAV ── */
-nav { background: var(--panel2); border-bottom: 1px solid var(--border); display: flex; }
-nav button { background: none; border: none; border-bottom: 2px solid transparent; color: var(--dim); padding: 12px 22px; cursor: pointer; font-size: 0.9rem; transition: all .15s; }
-nav button:hover { color: var(--text); }
-nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
+/* ── NAV ── */
+nav {
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  overflow: hidden;
+}
+nav button {
+  flex: 1 1 0;
+  min-width: 0;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--dim);
+  padding: 11px 4px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: .2px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+nav button::before { content: attr(data-desktop); }
+nav button.active  { color: var(--gold); border-bottom-color: var(--gold); }
+nav button:hover:not(.active) { color: var(--text); }
+@media (max-width: 600px) {
+  nav button { font-size: 0.72rem; padding: 10px 2px; letter-spacing: 0; }
+  nav button::before { content: attr(data-mobile); }
+}
 
 .content { flex: 1; padding: 20px; max-width: 960px; margin: 0 auto; width: 100%; }
 .tab { display: none; }
@@ -383,11 +412,11 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <button class="btn-newgame" onclick="resetGame()" title="Terug naar clubkeuze">🔄 Nieuw spel</button>
   </div>
   <nav>
-    <button class="active" onclick="showTab('dashboard')">🏠 Dashboard</button>
-    <button onclick="showTab('opstelling')">👥 Basis Opstelling</button>
-    <button onclick="showTab('transfers')">💸 Transfers</button>
-    <button onclick="showTab('topscorers')">🥇 Topscorers</button>
-    <button onclick="showLeaderboard()">🌍 Ranglijst</button>
+    <button class="active" data-desktop="🏠 Dashboard"        data-mobile="DASH"  onclick="showTab('dashboard')"></button>
+    <button                data-desktop="📋 Basis Opstelling"  data-mobile="BASIS" onclick="showTab('opstelling')"></button>
+    <button                data-desktop="💸 Transfers"         data-mobile="TRX"   onclick="showTab('transfers')"></button>
+    <button                data-desktop="🥇 Topscorers"        data-mobile="GOAL"  onclick="showTab('topscorers')"></button>
+    <button                data-desktop="🌍 Ranglijst"         data-mobile="🏆"    onclick="showLeaderboard()"></button>
   </nav>
   <div class="content">
 
