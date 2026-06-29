@@ -2093,7 +2093,7 @@ function renderTransfers(){
       +'<div style="font-weight:600;font-size:0.95rem">'+p.name+' <span style="font-size:1.25rem;font-weight:800;color:#e8b84b;vertical-align:middle;margin-left:5px">'+p.rating+'</span></div>'
       +'<div style="font-size:0.8rem;color:var(--dim)">'+p.pos+' · ⭐ '+p.rating+' · 💰 '+fmtMoney(p.value)+'</div>'
       +'</div>'
-      +'<span style="font-size:0.75rem;color:'+(att<=0?'var(--red)':'var(--dim)')+'">'+att+' pogingen</span>'
+      +'<div style="text-align:center;min-width:48px"><div style="font-size:1.3rem;font-weight:800;color:'+(att<=0?'#e74c3c':'var(--accent)')+'">'+att+'</div><div style="font-size:10px;color:var(--dim);margin-top:1px">pogingen</div></div>'
       +'</div>'
       +'<div style="display:flex;gap:5px">'
       +'<button onclick="makeOffer(0.35,'+p.value+','+p.id+',null)" '+dis+' style="flex:1;padding:6px 0;font-size:0.75rem;background:none;color:var(--dim);border:1px solid var(--border);border-radius:6px;cursor:pointer"><span style="display:block">25%</span><small style="display:block;font-size:10px;opacity:0.75">'+fmtMoney(Math.round(p.value*0.35))+'</small></button>'
@@ -2228,7 +2228,8 @@ function renderClubSearch(){
       +'<div class="club-player-name">'+p.name+' <span style="font-size:1.25rem;font-weight:800;color:#e8b84b;vertical-align:middle;margin-right:5px">'+p.rating+'</span><span style="font-size:0.75rem;color:var(--dim)">'+p.pos+'</span></div>'
       +'<div class="club-player-meta">⭐ '+p.rating+' 💰 €'+fmtV(p.value)+'</div>'
       +'<div class="club-player-meta" style="color:var(--accent)">'+tn+'</div>'
-      +'</div>'
+      
+      +'<div style="font-size:11px;margin-top:6px;color:'+(G.scoutAttempts&&G.scoutAttempts[p.id]<=0?'#e74c3c':'var(--dim)')+'">🎯 Pogingen: <strong>'+(G.scoutAttempts&&G.scoutAttempts[p.id]!==undefined?G.scoutAttempts[p.id]:8)+'</strong>/8</div>'+'</div>'
       +(noCap?'<span style="font-size:0.75rem;color:var(--red)">🚫 Cap vol</span>':'')
       +'</div>'
       +'<div style="display:flex;gap:5px">'+btns+'</div>'
