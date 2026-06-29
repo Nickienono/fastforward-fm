@@ -851,7 +851,6 @@ async function launchGame(hasSave) {
         G.completedSeasons        = G.completedSeasons        || 0;
         G.careerMultiplier        = G.careerMultiplier        || 1;
       G.scoutAttempts           = G.scoutAttempts           || {};
-      G.marketRound             = G.marketRound             !== undefined ? G.marketRound : -1;
         G.results                 = G.results                 || [];
         renderAll();
         showSaveScreen(false);
@@ -1282,7 +1281,6 @@ function startGame(teamIdx) {
     history:         [],
     careerMultiplier: teamIdx<=2 ? 1.0 : teamIdx<=5 ? 1.25 : teamIdx<=11 ? 1.5 : 2.0,
   scoutAttempts:   {},
-  marketRound:     -1,
   };
 
   // Topbar
@@ -1537,18 +1535,8 @@ function playNextMatch() {
 
 function generateMarket() {
   const pos = ['K','V','V','V','M','M','M','A','A','A'];
-  // Dynamic pool: human squad avg ±10, clamped 40–99
-  var _avg = 70;
-  if (G && G.teams && G.myName) {
-    var _mt = G.teams.find(function(t){ return t.name === G.myName; });
-    if (_mt) {
-      var _sq = [].concat(_mt.starters||[], _mt.bench||[]);
-      if (_sq.length) _avg = Math.round(_sq.reduce(function(s,p){ return s+p.rating; },0)/_sq.length);
-    }
-  }
-  var _minR = Math.max(40, _avg - 10), _maxR = Math.min(99, _avg + 10);
   return pos.map(p => {
-    const r = ri(_minR, _maxR);
+    const r = ri(58, 85);
     return { id: ++_pid, attemptsLeft: 8, name: randomName(), pos: p, rating: r,
              fitness: ri(80,100), value: calcValue(r), club: 'Vrije agent' };
   });
@@ -2020,11 +2008,6 @@ function renderOpsteliling() {
 }
 
 function renderTransfers() {
-  // Refresh free-agent pool whenever the round advances
-  if (!G.market || !G.market.length || G.marketRound !== G.round) {
-    G.market = generateMarket();
-    G.marketRound = G.round;
-  }
   const _done = G.transfersThisSeason || 0;
   const _capEl = document.getElementById('transfer-cap-bar');
   if (_capEl) { _capEl.innerHTML = '<span class="tm-cap-badge'+(_done>=20?' tm-cap-full':'')+'">💼 Transfers dit seizoen: '+_done+' / 20 gedaan</span>'; }
@@ -2051,8 +2034,18 @@ function renderTransfers() {
   if (scoutEl) {
     const otherTeams = G.teams.filter(t => t.name!==G.myName);
     const scouts = [];
+    // Scout filter: only show club players within human team avg ±10
+    var _scAvg = 70;
+    if (G.teams && G.myName) {
+      var _scMt = G.teams.find(function(t){ return t.name === G.myName; });
+      if (_scMt) {
+        var _scSq = [].concat(_scMt.starters||[], _scMt.bench||[]);
+        if (_scSq.length) _scAvg = Math.round(_scSq.reduce(function(s,p){ return s+p.rating; },0)/_scSq.length);
+      }
+    }
+    var _scMinR = Math.max(40, _scAvg - 10), _scMaxR = Math.min(99, _scAvg + 10);
     otherTeams.forEach(t => [...t.starters,...t.bench].forEach(p => {
-      if ((!search||p.name.toLowerCase().includes(search))&&(!posF||p.pos===posF))
+      if ((!search||p.name.toLowerCase().includes(search))&&(!posF||p.pos===posF)&&p.rating>=_scMinR&&p.rating<=_scMaxR)
         scouts.push({...p,teamName:t.name});
     }));
     scouts.sort((a,b)=>b.rating-a.rating);
@@ -2264,8 +2257,7 @@ async function newSeason() {
   // 4. Reset seizoensstatus
   document.getElementById('modal-season').classList.remove('open');
   G.transfersThisSeason = 0;
-  G.scoutAttempts = {};
-  G.marketRound = -1;  // reset bij nieuw seizoen
+  G.scoutAttempts = {};  // reset bij nieuw seizoen
   G.season++;
   G.round   = 0;
   G.results = [];
