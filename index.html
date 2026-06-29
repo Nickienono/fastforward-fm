@@ -851,6 +851,8 @@ async function launchGame(hasSave) {
         G.completedSeasons        = G.completedSeasons        || 0;
         G.careerMultiplier        = G.careerMultiplier        || 1;
       G.scoutAttempts           = G.scoutAttempts           || {};
+      G.scoutPool               = G.scoutPool               || [];
+      G.scoutPoolRound          = G.scoutPoolRound          !== undefined ? G.scoutPoolRound : -1;
         G.results                 = G.results                 || [];
         renderAll();
         showSaveScreen(false);
@@ -1281,6 +1283,8 @@ function startGame(teamIdx) {
     history:         [],
     careerMultiplier: teamIdx<=2 ? 1.0 : teamIdx<=5 ? 1.25 : teamIdx<=11 ? 1.5 : 2.0,
   scoutAttempts:   {},
+  scoutPool:       [],
+  scoutPoolRound:  -1,
   };
 
   // Topbar
@@ -2034,7 +2038,7 @@ function renderTransfers() {
   if (scoutEl) {
     const otherTeams = G.teams.filter(t => t.name!==G.myName);
     const scouts = [];
-    // Scout filter: only show club players within human team avg ±10
+    // Dynamic scout pool: randomly generated per round, rating = human avg ±10
     var _scAvg = 70;
     if (G.teams && G.myName) {
       var _scMt = G.teams.find(function(t){ return t.name === G.myName; });
@@ -2044,10 +2048,21 @@ function renderTransfers() {
       }
     }
     var _scMinR = Math.max(40, _scAvg - 10), _scMaxR = Math.min(99, _scAvg + 10);
-    otherTeams.forEach(t => [...t.starters,...t.bench].forEach(p => {
-      if ((!search||p.name.toLowerCase().includes(search))&&(!posF||p.pos===posF)&&p.rating>=_scMinR&&p.rating<=_scMaxR)
-        scouts.push({...p,teamName:t.name});
-    }));
+    if (!G.scoutPool || !G.scoutPool.length || G.scoutPoolRound !== G.round) {
+      var _spPos = ['K','V','V','V','M','M','M','A','A','A','V','M','A'];
+      var _spTeams = otherTeams.map(function(t){ return t.name; });
+      G.scoutPool = _spPos.map(function(_sp) {
+        var r = ri(_scMinR, _scMaxR);
+        var club = _spTeams[Math.floor(Math.random()*_spTeams.length)];
+        return { id: ++_pid, name: randomName(), pos: _sp, rating: r,
+                 fitness: ri(80,100), value: calcValue(r), teamName: club };
+      });
+      G.scoutPoolRound = G.round;
+    }
+    G.scoutPool.forEach(function(p) {
+      if ((!search||p.name.toLowerCase().includes(search))&&(!posF||p.pos===posF))
+        scouts.push(p);
+    });
     scouts.sort((a,b)=>b.rating-a.rating);
     scoutEl.innerHTML = scouts.slice(0,20).map(p =>
       '<div class="tf-card"><div><div class="tf-name">'+p.name+'</div>'
@@ -2257,7 +2272,9 @@ async function newSeason() {
   // 4. Reset seizoensstatus
   document.getElementById('modal-season').classList.remove('open');
   G.transfersThisSeason = 0;
-  G.scoutAttempts = {};  // reset bij nieuw seizoen
+  G.scoutAttempts = {};
+  G.scoutPool = [];
+  G.scoutPoolRound = -1;  // reset bij nieuw seizoen
   G.season++;
   G.round   = 0;
   G.results = [];
