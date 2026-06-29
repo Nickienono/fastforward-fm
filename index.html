@@ -1686,6 +1686,8 @@ function openNegotiation(pid, fromTeamName) {
     if (team) player = [...team.starters,...team.bench].find(p => p.id===pid);
     if (player) player = {...player, teamName: fromTeamName};
   }
+  // Fallback: generated scout pool player (not in AI roster)
+  if (!player && G.scoutPool) { const _sp=G.scoutPool.find(function(p){ return p.id===pid; }); if(_sp) player={..._sp}; }
   if (!player) return;
   NEGOTIATE_PID = pid; NEGOTIATE_FROM_TEAM = fromTeamName;
   const askingPrice = fromTeamName ? Math.round(player.value*1.25) : player.value;
@@ -1757,6 +1759,8 @@ function makeOffer(factor, askingPrice) {
         else{let bi=team.bench.findIndex(p=>p.id===pid);if(bi>=0){player={...team.bench[bi]};team.bench.splice(bi,1);}}
       }
     }
+    // Fallback: generated scout pool player
+    if (!player && G.scoutPool) { const _spi=G.scoutPool.findIndex(function(p){ return p.id===pid; }); if(_spi>=0){player={...G.scoutPool[_spi]};G.scoutPool.splice(_spi,1);} }
     if (player){
       myTeam.budget-=offer;
       player.club=G.myName; player.baseRating=player.baseRating||player.rating;
