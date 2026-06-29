@@ -1772,7 +1772,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
       if(player.attemptsLeft===undefined)player.attemptsLeft=8;
       player.attemptsLeft=Math.max(0,player.attemptsLeft-1);
     }
-    toast('❌ Onvoldoende budget! (€'+fmtV(offerPrice)+' nodig)');
+    toast('❌ Onvoldoende budget! ('+fmtMoney(offerPrice)+' nodig)');
     renderTransfers();
     return;
   }
@@ -1794,7 +1794,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
       if(G.scoutPool)G.scoutPool=G.scoutPool.filter(function(p){return p.id!==playerId;});
       if(G.market)G.market=G.market.filter(function(p){return p.id!==playerId;});
     }
-    toast('✅ '+player.name+' getransfereerd voor €'+fmtV(offerPrice)+'!');
+    toast('✅ '+player.name+' getransfereerd voor '+fmtMoney(offerPrice)+'!');
     saveGame();
     if(sourceTeam)renderClubSearch();
   } else {
@@ -1803,11 +1803,6 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
   }
   renderTransfers();
 }
-
-// ══════════════════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════════════════
-
 function renderAll() {
   updateTopBar();
   renderDashboard();
@@ -2052,13 +2047,12 @@ function renderTransfers(){
   var budget=myTeam?(myTeam.budget||0):0;
   var cap=G.transfersThisSeason||0;
   var bar=document.getElementById('transfer-cap-bar');
-  if(bar)bar.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:var(--dim);margin-bottom:6px"><span>📋 Transfers: <strong style="color:'+(cap>=20?'var(--red)':'var(--fg)')+'">'+cap+'/20</strong></span><span>💰 Budget: <strong>€'+fmtV(budget)+'</strong></span></div>';
+  if(bar)bar.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:var(--dim);margin-bottom:6px"><span>📋 Transfers: <strong style="color:'+(cap>=20?'var(--red)':'var(--fg)')+'">'+cap+'/20</strong></span><span>💰 Budget: <strong>'+fmtMoney(budget)+'</strong></span></div>';
   var pool=G.scoutPool||G.market||[];
   var listEl=document.getElementById('scout-pool-list');
   if(!listEl)return;
   if(!pool.length){listEl.innerHTML='<p style="color:var(--dim);text-align:center;padding:20px">Geen vrije spelers. Klik Verversen.</p>';return;}
   var noCap=cap>=20;
-  var fmtV2=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'k':String(v);};
   listEl.innerHTML=pool.map(function(p){
     var att=p.attemptsLeft!==undefined?p.attemptsLeft:8;
     var dis=(noCap||att<=0)?'disabled':'';
@@ -2066,7 +2060,7 @@ function renderTransfers(){
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
       +'<div>'
       +'<div style="font-weight:600;font-size:0.95rem">'+p.name+'</div>'
-      +'<div style="font-size:0.8rem;color:var(--dim)">'+p.pos+' · ⭐ '+p.rating+' · 💰 €'+fmtV2(p.value)+'</div>'
+      +'<div style="font-size:0.8rem;color:var(--dim)">'+p.pos+' · ⭐ '+p.rating+' · 💰 '+fmtMoney(p.value)+'</div>'
       +'</div>'
       +'<span style="font-size:0.75rem;color:'+(att<=0?'var(--red)':'var(--dim)')+'">'+att+' pogingen</span>'
       +'</div>'
