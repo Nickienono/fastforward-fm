@@ -381,6 +381,15 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .neg-budget-warn { color: var(--red); font-size: 0.78rem; text-align: center; margin-top: 6px; }
 .tf-club-tag { font-size: 0.7rem; background: var(--panel2); border-radius: 4px; padding: 2px 6px; color: var(--dim); }
 .scout-section { margin-top: 20px; }
+.trx-subtabs{display:flex;gap:8px;margin-bottom:16px;}
+.trx-sub-btn{flex:1;padding:8px 4px;border:1px solid var(--border);background:none;color:var(--dim);border-radius:8px;cursor:pointer;font-size:0.85rem;transition:all .15s;}
+.trx-sub-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.club-db-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.club-db-filters input,.club-db-filters select{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:7px 10px;border-radius:8px;font-size:0.85rem;width:100%;box-sizing:border-box;}
+.club-player-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.club-player-info{display:flex;flex-direction:column;gap:3px;}
+.club-player-name{font-weight:600;font-size:0.95rem;}
+.club-player-meta{font-size:0.78rem;color:var(--dim);}
 .btn-logout { background: none; border: 1px solid var(--border); color: var(--dim); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all .15s; }
 .btn-logout:hover { border-color: var(--red); color: var(--red); }
 </style>
@@ -526,25 +535,27 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 
     <!-- TAB: TRANSFERS -->
     <div id="tab-transfers" class="tab">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;font-size:1rem">Transfermarkt</h2>
-        <button class="btn-refresh" id="btn-refresh" onclick="refreshMarket()">🔄 Ververs (€50K)</button>
+      <div id="transfer-cap-bar" style="margin-bottom:14px"></div>
+      <div class="trx-subtabs">
+        <button class="trx-sub-btn active" id="btn-trx-scout" onclick="showTrxTab('scout')">🆓 Scout &amp; Koop</button>
+        <button class="trx-sub-btn" id="btn-trx-club" onclick="showTrxTab('club')">🔍 Club Database</button>
       </div>
-      <div class="tf-filters">
-        <input type="text" id="tf-search" placeholder="Speler zoeken…" oninput="renderTransfers()">
-        <select id="tf-pos" onchange="renderTransfers()">
-          <option value="">Alle posities</option>
-          <option>K</option><option>V</option><option>M</option><option>A</option>
-        </select>
+      <div id="trx-scout-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h2 style="margin:0;font-size:1rem">Vrije Spelers Markt</h2>
+          <button class="btn-refresh" onclick="refreshMarket()">🔄 Verversen</button>
+        </div>
+        <div id="scout-pool-list"></div>
       </div>
-      <div id="transfer-cap-bar"></div>
-      <div class="tf-grid" id="market-grid"></div>
-      <div style="margin-top:20px">
-        <div class="section-title">🔍 Andere Clubs – Scout & Koop</div>
-        <div class="tf-grid" id="scout-grid"></div>
+      <div id="trx-club-panel" style="display:none">
+        <div class="club-db-filters">
+          <input type="text" id="filter-naam" placeholder="🔍 Zoek op naam..." oninput="renderClubSearch()">
+          <select id="filter-pos" onchange="renderClubSearch()"><option value="">Alle posities</option><option value="K">Keeper</option><option value="V">Verdediger</option><option value="M">Middenvelder</option><option value="A">Aanvaller</option></select>
+          <select id="filter-club" onchange="renderClubSearch()"><option value="">Alle clubs</option></select>
+          <select id="filter-rating" onchange="renderClubSearch()"><option value="">Alle ratings</option><option value="60">60–70</option><option value="70">70–80</option><option value="80">80+</option></select>
+        </div>
+        <div id="club-search-list"></div>
       </div>
-      <div class="section-title">Jouw Selectie – Verkopen</div>
-      <div class="tf-grid" id="sell-grid"></div>
     </div>
 
   </div>
@@ -1555,22 +1566,26 @@ function playNextMatch() {
 //  TRANSFERS
 // ══════════════════════════════════════════════════
 
-function generateMarket() {
-  const pos = ['K','V','V','V','M','M','M','A','A','A'];
-  return pos.map(p => {
-    const r = ri(58, 85);
-    return { id: ++_pid, attemptsLeft: 8, name: randomName(), pos: p, rating: r,
-             fitness: ri(80,100), value: calcValue(r), club: 'Vrije agent' };
+function generateMarket(){
+  var myTeam=G&&G.teams?G.teams.find(function(t){return t.name===G.myName;}):null;
+  var avg=(myTeam&&myTeam.players&&myTeam.players.length)
+    ?Math.round(myTeam.players.reduce(function(s,p){return s+(p.rating||70);},0)/myTeam.players.length)
+    :70;
+  var lo=Math.max(50,avg-10),hi=Math.min(99,avg+10);
+  var posList=['K','V','V','V','V','M','M','M','M','M','A','A','A','A','A'];
+  var pool=posList.map(function(p){
+    var r=ri(lo,hi);
+    return {id:++_pid,attemptsLeft:8,name:randomName(),pos:p,rating:r,
+            fitness:ri(80,100),value:calcValue(r),club:'Vrije agent',source:'free'};
   });
+  if(typeof G!=='undefined'&&G){G.scoutPool=pool;}
+  return pool;
 }
-
-function refreshMarket() {
-  const myTeam = G.teams.find(t => t.name === G.myName);
-  if (myTeam.budget < 50000) { toast('Onvoldoende budget!'); return; }
-  myTeam.budget -= 50000;
-  G.market = generateMarket();
-  renderAll();
-  toast('Markt ververst.');
+function refreshMarket(){
+  G.market=generateMarket();
+  G.scoutPool=G.market;
+  renderTransfers();
+  toast('🔄 Nieuwe spelers geladen!');
 }
 
 function buyPlayer(pid) { openNegotiation(pid, null); }
@@ -1734,62 +1749,58 @@ function closeNegotiation() {
   NEGOTIATE_PID=null; NEGOTIATE_FROM_TEAM=null;
 }
 
-function makeOffer(factor, askingPrice) {
-  // ── Transfer cap: max 20 per seizoen ──
-  if ((G.transfersThisSeason||0) >= 20) {
-    toast('❌ Je hebt het maximum van 20 transfers voor dit seizoen bereikt!');
+function makeOffer(factor,askingPrice,playerId,sourceTeam){
+  if((G.transfersThisSeason||0)>=20){toast('❌ Maximum van 20 transfers per seizoen bereikt!');return;}
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  var player=null,aiTeam=null;
+  if(sourceTeam){
+    aiTeam=G.teams.find(function(t){return t.name===sourceTeam;});
+    if(aiTeam&&aiTeam.players)player=aiTeam.players.find(function(p){return p.id===playerId;});
+  } else {
+    var pool=G.scoutPool||G.market||[];
+    player=pool.find(function(p){return p.id===playerId;});
+  }
+  if(!player){toast('❌ Speler niet beschikbaar.');return;}
+  var offerPrice=Math.round(askingPrice*factor);
+  if((myTeam.budget||0)<offerPrice){
+    if(!sourceTeam){
+      if(player.attemptsLeft===undefined)player.attemptsLeft=8;
+      player.attemptsLeft=Math.max(0,player.attemptsLeft-1);
+    }
+    toast('❌ Onvoldoende budget!');
+    renderTransfers();
     return;
   }
-  const myTeam=G.teams.find(t=>t.name===G.myName);
-  const offer=Math.round(askingPrice*factor);
-  if (myTeam.budget<offer){toast('Onvoldoende budget!');return;}
-  const pid=NEGOTIATE_PID, fromT=NEGOTIATE_FROM_TEAM;
-  // ── Attempt token check (max 8 pogingen per speler) ──
-  const _mktP = G.market.find(p => p.id === pid);
-  if (_mktP) {
-    if ((_mktP.attemptsLeft ?? 8) <= 0) {
-      toast('❌ Onderhandelingen definitief mislukt voor deze speler!');
-      renderTransfers(); return;
-    }
-    _mktP.attemptsLeft = (_mktP.attemptsLeft ?? 8) - 1;
-  } else {
-    // Scout player — track attempts in G.scoutAttempts
-    if (!G.scoutAttempts) G.scoutAttempts = {};
-    const _sa = G.scoutAttempts[pid] !== undefined ? G.scoutAttempts[pid] : 8;
-    if (_sa <= 0) {
-      toast('❌ Onderhandelingen definitief mislukt voor deze speler!');
-      renderTransfers(); return;
-    }
-    G.scoutAttempts[pid] = _sa - 1;
+  if(sourceTeam){
+    myTeam.budget-=offerPrice;
+    G.transfersThisSeason=(G.transfersThisSeason||0)+1;
+    if(!myTeam.players)myTeam.players=[];
+    myTeam.players.push({id:player.id,name:player.name,pos:player.pos,rating:player.rating,fitness:player.fitness||100,value:player.value,club:G.myName});
+    aiTeam.players=aiTeam.players.filter(function(p){return p.id!==playerId;});
+    aiTeam.budget=(aiTeam.budget||0)+offerPrice;
+    toast('✅ '+player.name+' overgenomen van '+sourceTeam+'!');
+    saveGame();
+    renderClubSearch();
+    renderTransfers();
+    return;
   }
-  let sc=factor>=1.20?0.98:factor>=1.00?0.90:factor>=0.85?0.55:0.20;
-  closeNegotiation(); renderTransfers();
-  if (Math.random()<sc) {
-    let player=null;
-    if (!fromT) {
-      const idx=G.market.findIndex(p=>p.id===pid);
-      if (idx>=0){player={...G.market[idx]};G.market.splice(idx,1);}
-    } else {
-      const team=G.teams.find(t=>t.name===fromT);
-      if (team){
-        let si=team.starters.findIndex(p=>p.id===pid);
-        if (si>=0){player={...team.starters[si]};team.starters.splice(si,1);}
-        else{let bi=team.bench.findIndex(p=>p.id===pid);if(bi>=0){player={...team.bench[bi]};team.bench.splice(bi,1);}}
-      }
-    }
-    // Fallback: generated scout pool player
-    if (!player && G.scoutPool) { const _spi=G.scoutPool.findIndex(function(p){ return p.id===pid; }); if(_spi>=0){player={...G.scoutPool[_spi]};G.scoutPool.splice(_spi,1);} }
-    if (player){
-      myTeam.budget-=offer;
-      player.club=G.myName; player.baseRating=player.baseRating||player.rating;
-      myTeam.bench.push(player); renderAll();
-      G.transfersThisSeason = (G.transfersThisSeason||0) + 1;
-      saveGame();
-      toast('✅ '+player.name+' gekocht voor '+fmtMoney(offer)+'!');
-    }
+  if(player.attemptsLeft===undefined)player.attemptsLeft=8;
+  player.attemptsLeft=Math.max(0,player.attemptsLeft-1);
+  var chance=factor>=1.2?0.90:factor>=1.0?0.65:0.40;
+  if(Math.random()<=chance){
+    myTeam.budget-=offerPrice;
+    G.transfersThisSeason=(G.transfersThisSeason||0)+1;
+    if(!myTeam.players)myTeam.players=[];
+    myTeam.players.push({id:player.id,name:player.name,pos:player.pos,rating:player.rating,fitness:player.fitness||100,value:player.value,club:G.myName});
+    if(G.scoutPool)G.scoutPool=G.scoutPool.filter(function(p){return p.id!==playerId;});
+    if(G.market)G.market=G.market.filter(function(p){return p.id!==playerId;});
+    toast('✅ '+player.name+' naar jouw team!');
+    saveGame();
   } else {
-    toast('❌ Bod afgewezen! Probeer een hoger bod.');
+    toast('❌ Bod afgewezen! '+(player.attemptsLeft>0?player.attemptsLeft+' pogingen over.':'Geen pogingen meer.'));
   }
+  renderTransfers();
 }
 
 // ══════════════════════════════════════════════════
@@ -2033,101 +2044,115 @@ function renderOpsteliling() {
   renderBaseSubs();
 }
 
-function renderTransfers() {
-  const _done = G.transfersThisSeason || 0;
-  const _capEl = document.getElementById('transfer-cap-bar');
-  if (_capEl) { _capEl.innerHTML = '<span class="tm-cap-badge'+(_done>=20?' tm-cap-full':'')+'">💼 Transfers dit seizoen: '+_done+' / 20 gedaan</span>'; }
-  const myTeam = G.teams.find(t => t.name === G.myName);
-  const search = (document.getElementById('tf-search')?.value||'').toLowerCase();
-  const posF   = document.getElementById('tf-pos')?.value||'';
-
-  const market = G.market.filter(p =>
-    (!search || p.name.toLowerCase().includes(search)) && (!posF || p.pos===posF)
-  );
-
-  document.getElementById('market-grid').innerHTML = market.length
-    ? market.map(p => '<div class="tf-card"><div><div class="tf-name">'+p.name+'</div>'
-        +'<div class="tf-meta">'+p.pos+' · '+p.fitness+'% fit · '+fmtMoney(p.value)+'</div>'
-        +'<div style="font-size:.7rem;color:var(--dim)">Vrije agent</div></div>'
-        +'<div class="tf-rating">'+p.rating+'</div>'
-        +'<div class="tm-token">🔄 '+(p.attemptsLeft!==undefined?p.attemptsLeft:8)+' / 8 pogingen over</div>'
-        +'<button class="btn-buy"'+(p.attemptsLeft===0||(G.transfersThisSeason||0)>=20?' disabled':'')+' onclick="openNegotiation('+p.id+',null)">'+(p.attemptsLeft===0?'❌ Afgebroken':(G.transfersThisSeason||0)>=20?'🔒 Markt Gesloten':'Onderhandelen')+'</button></div>'
-      ).join('')
-    : '<p style="color:var(--dim);font-size:.85rem">Geen vrije agenten gevonden.</p>';
-
-  // Andere clubs scouten
-  const scoutEl = document.getElementById('scout-grid');
-  if (scoutEl) {
-    const otherTeams = G.teams.filter(t => t.name!==G.myName);
-    const scouts = [];
-    // Dynamic scout pool: randomly generated per round, rating = human avg ±10
-    var _scAvg = 70;
-    if (G.teams && G.myName) {
-      var _scMt = G.teams.find(function(t){ return t.name === G.myName; });
-      if (_scMt) {
-        var _scSq = [].concat(_scMt.starters||[], _scMt.bench||[]);
-        if (_scSq.length) _scAvg = Math.round(_scSq.reduce(function(s,p){ return s+p.rating; },0)/_scSq.length);
-      }
-    }
-    var _scMinR = Math.max(40, _scAvg - 10), _scMaxR = Math.min(99, _scAvg + 10);
-    if (!G.scoutPool || !G.scoutPool.length || G.scoutPoolRound !== G.round) {
-      var _spPos = ['K','V','V','V','M','M','M','M','M','A','A','A','A','V','K'];
-      var _spClubs = (G.teams||[]).filter(function(t){ return t.name !== G.myName; }).map(function(t){ return t.name; });
-      var _spW = Math.max(1, Math.floor((_scMaxR - _scMinR) / 5));
-      var _spTiers = [
-        [_scMinR,              _scMinR + _spW - 1],
-        [_scMinR + _spW,       _scMinR + _spW*2 - 1],
-        [_scMinR + _spW*2,     _scMinR + _spW*3 - 1],
-        [_scMinR + _spW*3,     _scMinR + _spW*4 - 1],
-        [_scMinR + _spW*4,     _scMaxR],
-      ];
-      G.scoutPool = [];
-      _spPos.forEach(function(pos, idx) {
-        var tier = _spTiers[Math.min(Math.floor(idx / 3), 4)];
-        var r = ri(tier[0], Math.min(tier[1], _scMaxR));
-        var club = _spClubs.length ? _spClubs[Math.floor(Math.random()*_spClubs.length)] : 'Eredivisie';
-        G.scoutPool.push({ id: ++_pid, name: randomName(), pos: pos, rating: r,
-                           fitness: ri(80,100), value: calcValue(r), teamName: club });
-      });
-      G.scoutPoolRound = G.round;
-    }
-    G.scoutPool.forEach(function(p) {
-      if ((!search||p.name.toLowerCase().includes(search))&&(!posF||p.pos===posF))
-        scouts.push(p);
-    });
-    scouts.sort((a,b)=>b.rating-a.rating);
-    scoutEl.innerHTML = scouts.slice(0,20).map(p =>
-      '<div class="tf-card"><div><div class="tf-name">'+p.name+'</div>'
-      +'<div class="tf-meta">'+p.pos+' · OVR '+p.rating+' · '+p.fitness+'% fit</div>'
-      +'<span class="tf-club-tag">🏟 '+p.teamName+'</span></div>'
-      +'<div class="tf-rating">'+p.rating+'</div>'
-      +'<div class="tm-token">🔄 '+((G.scoutAttempts||{})[p.id]!==undefined?(G.scoutAttempts||{})[p.id]:8)+' / 8 pogingen over</div>'
-      +'<button class="btn-buy"'+((G.scoutAttempts||{})[p.id]===0||(G.transfersThisSeason||0)>=20?' disabled':'')+' data-pid="'+p.id+'" data-team="'+p.teamName+'" onclick="openNegotiation(+this.dataset.pid,this.dataset.team)">'
-      +((G.scoutAttempts||{})[p.id]===0?'❌ Afgebroken':(G.transfersThisSeason||0)>=20?'🔒 Markt Gesloten':'Onderhandelen')
-      +'</button></div>'
-    ).join('') || '<p style="color:var(--dim);font-size:.85rem">Geen spelers.</p>';
+function renderTransfers(){
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  var budget=myTeam?(myTeam.budget||0):0;
+  var cap=G.transfersThisSeason||0;
+  var fmtV=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'k':String(v);};
+  var capBar=document.getElementById('transfer-cap-bar');
+  if(capBar){
+    var pct=Math.min(100,(cap/20)*100);
+    var bclr=pct>=100?'var(--red)':pct>=80?'#f59e0b':'var(--accent)';
+    capBar.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:0.8rem;color:var(--dim)"><span>Transfers dit seizoen</span><span>'+cap+'/20</span></div><div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+bclr+';border-radius:4px;transition:width .4s"></div></div><div style="font-size:0.75rem;color:var(--dim);margin-top:4px">Budget: €'+fmtV(budget)+'</div>';
   }
-
-  const squad = [...myTeam.starters, ...myTeam.bench]
-    .filter(p => (!search||p.name.toLowerCase().includes(search)) && (!posF||p.pos===posF))
-    .sort((a,b) => b.rating - a.rating);
-
-  const total = myTeam.starters.length + myTeam.bench.length;
-  document.getElementById('sell-grid').innerHTML = squad.map(p => {
-    const inStart = myTeam.starters.includes(p);
-    return `<div class="tf-card">
-      <div>
-        <div class="tf-name">${p.name} ${inStart?'<span style="font-size:.7rem;color:var(--gold)">BASIS</span>':''}</div>
-        <div class="tf-meta">${p.pos} · OVR ${p.rating}${p.age?' · '+p.age+' jr':''}</div>
-      </div>
-      <div class="tf-rating">${p.rating}</div>
-      <div class="tf-value">${fmtMoney(p.value)}</div>
-      <button class="btn-sell" onclick="sellPlayer(${p.id})" ${total<=11?'disabled':''}>Verkopen</button>
-    </div>`;
+  var pool=G.scoutPool||G.market||[];
+  var listEl=document.getElementById('scout-pool-list');
+  if(!listEl)return;
+  if(!pool.length){listEl.innerHTML='<p style="color:var(--dim);text-align:center;padding:20px">Geen spelers — klik Verversen</p>';return;}
+  var posColors={K:'#888',V:'#4a9eff',M:'#f0c040',A:'#ff6060'};
+  listEl.innerHTML=pool.map(function(p){
+    var att=p.attemptsLeft!==undefined?p.attemptsLeft:8;
+    var noAtt=att<=0,noCap=cap>=20;
+    var dis=(noAtt||noCap)?'disabled':'';
+    var pc=posColors[p.pos]||'var(--dim)';
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+      +'<div><span style="font-weight:600">'+p.name+'</span><span style="margin-left:8px;font-size:0.78rem;background:'+pc+'22;color:'+pc+';border-radius:4px;padding:2px 6px">'+p.pos+'</span></div>'
+      +'<div style="font-size:0.8rem;color:var(--dim)">⭐ '+p.rating+' 💪 '+p.fitness+'%</div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">'
+      +'<div style="font-size:0.8rem;color:var(--dim)">💰 €'+fmtV(p.value)+' 🎯 '+att+'/8</div>'
+      +'<div style="display:flex;gap:5px">'
+      +'<button onclick="makeOffer(0.85,'+p.value+','+p.id+',null)" '+dis+' style="font-size:0.75rem;padding:5px 8px;background:none;border:1px solid var(--border);color:var(--dim);border-radius:6px;cursor:pointer">Laag</button>'
+      +'<button onclick="makeOffer(1.0,'+p.value+','+p.id+',null)" '+dis+' style="font-size:0.75rem;padding:5px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">Bod</button>'
+      +'<button onclick="makeOffer(1.2,'+p.value+','+p.id+',null)" '+dis+' style="font-size:0.75rem;padding:5px 8px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;cursor:pointer">Hoog</button>'
+      +'</div>'
+      +'</div>'
+      +(noAtt?'<div style="font-size:0.75rem;color:var(--red);margin-top:5px">❌ Geen pogingen meer</div>'
+       :noCap?'<div style="font-size:0.75rem;color:var(--red);margin-top:5px">❌ Transfer cap bereikt</div>':'')
+      +'</div>';
   }).join('');
-
-  const rb = document.getElementById('btn-refresh');
-  if (rb) rb.disabled = myTeam.budget < 50000;
+}
+function showTrxTab(tab){
+  var sp=document.getElementById('trx-scout-panel');
+  var cp=document.getElementById('trx-club-panel');
+  var sb=document.getElementById('btn-trx-scout');
+  var cb=document.getElementById('btn-trx-club');
+  if(!sp||!cp)return;
+  if(tab==='club'){
+    sp.style.display='none';cp.style.display='';
+    if(sb)sb.classList.remove('active');if(cb)cb.classList.add('active');
+    populateClubFilter();renderClubSearch();
+  } else {
+    sp.style.display='';cp.style.display='none';
+    if(sb)sb.classList.add('active');if(cb)cb.classList.remove('active');
+  }
+}
+function populateClubFilter(){
+  var sel=document.getElementById('filter-club');
+  if(!sel||!G||!G.teams)return;
+  var aiTeams=G.teams.filter(function(t){return t.name!==G.myName;});
+  sel.innerHTML='<option value="">Alle clubs</option>'+aiTeams.map(function(t){return '<option value="'+t.name+'">'+t.name+'</option>';}).join('');
+}
+function renderClubSearch(){
+  var naam=document.getElementById('filter-naam');
+  var posEl=document.getElementById('filter-pos');
+  var clubEl=document.getElementById('filter-club');
+  var ratingEl=document.getElementById('filter-rating');
+  var naamVal=(naam?naam.value:'').toLowerCase();
+  var posVal=posEl?posEl.value:'';
+  var clubVal=clubEl?clubEl.value:'';
+  var ratingVal=ratingEl?ratingEl.value:'';
+  var el=document.getElementById('club-search-list');
+  if(!el||!G||!G.teams)return;
+  var fmtV=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'k':String(v);};
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  var budget=myTeam?(myTeam.budget||0):0;
+  var cap=G.transfersThisSeason||0;
+  var aiTeams=G.teams.filter(function(t){return t.name!==G.myName;});
+  var results=[];
+  aiTeams.forEach(function(team){
+    if(clubVal&&team.name!==clubVal)return;
+    (team.players||[]).forEach(function(p){
+      if(posVal&&p.pos!==posVal)return;
+      if(naamVal&&!p.name.toLowerCase().includes(naamVal))return;
+      if(ratingVal==='60'&&(p.rating<60||p.rating>=70))return;
+      if(ratingVal==='70'&&(p.rating<70||p.rating>=80))return;
+      if(ratingVal==='80'&&p.rating<80)return;
+      results.push({player:p,teamName:team.name});
+    });
+  });
+  var hasPlayers=aiTeams.some(function(t){return t.players&&t.players.length>0;});
+  if(!results.length){
+    el.innerHTML=hasPlayers
+      ?'<p style="color:var(--dim);text-align:center;padding:20px">Geen spelers gevonden.</p>'
+      :'<p style="color:var(--dim);text-align:center;padding:20px">⚠️ AI teams hebben nog geen spelers. Speel een wedstrijd om ze te genereren.</p>';
+    return;
+  }
+  el.innerHTML=results.map(function(r){
+    var p=r.player;
+    var noCap=cap>=20,noBudget=budget<p.value;
+    var btnLabel=noCap?'🚫 Cap vol':noBudget?'💸 Te duur':'💼 Koop';
+    var dis=(noCap||noBudget)?'disabled':'';
+    return '<div class="club-player-card">'
+      +'<div class="club-player-info">'
+      +'<div class="club-player-name">'+p.name+' <span style="font-size:0.78rem;font-weight:normal;color:var(--dim)">'+p.pos+'</span></div>'
+      +'<div class="club-player-meta">⭐ '+p.rating+' 💰 €'+fmtV(p.value)+'</div>'
+      +'<div class="club-player-meta" style="color:var(--accent)">'+r.teamName+'</div>'
+      +'</div>'
+      +'<button onclick="makeOffer(1.0,'+p.value+','+p.id+',''+r.teamName+'')" '+dis+' style="padding:7px 12px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;white-space:nowrap">'+btnLabel+'</button>'
+      +'</div>';
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════
