@@ -964,8 +964,9 @@ async function abandonCareer() {
   buildTeamSelect();
   showScreen('select');
 }
-function logOut() {
-  if (!confirm('Weet je zeker dat je wilt uitloggen? Je carrièrevolg is veilig opgeslagen.')) return;
+async function logOut() {
+  if (!confirm('Weet je zeker dat je wilt uitloggen? Je carrièrevoortgang is veilig opgeslagen.')) return;
+  await saveGame();
   clearInterval(inactivityTimer);
   localStorage.removeItem('ffm_user');
   G = null;
