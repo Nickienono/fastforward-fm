@@ -539,6 +539,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       <div class="trx-subtabs">
         <button class="trx-sub-btn active" id="btn-trx-scout" onclick="showTrxTab('scout')">🆓 Scout &amp; Koop</button>
         <button class="trx-sub-btn" id="btn-trx-club" onclick="showTrxTab('club')">🔍 Club Database</button>
+        <button class="trx-sub-btn" id="btn-trx-sell" onclick="showTrxTab('sell')">💰 Verkopen</button>
       </div>
       <div id="trx-scout-panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -555,6 +556,11 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
           <select id="filter-rating" onchange="renderClubSearch()"><option value="">Alle ratings</option><option value="60">60–70</option><option value="70">70–80</option><option value="80">80+</option></select>
         </div>
         <div id="club-search-list"></div>
+      </div>
+      <div id="trx-sell-panel" style="display:none">
+        <h2 style="margin:0 0 8px">💰 Spelers Verkopen</h2>
+        <p style="color:#aaa;font-size:13px;margin:0 0 12px">80% van marktwaarde · telt mee als transfer</p>
+        <div id="trx-sell-content"></div>
       </div>
     </div>
 
@@ -1810,7 +1816,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
     myTeam.budget-=offerPrice;
     G.transfersThisSeason=(G.transfersThisSeason||0)+1;
     if(!myTeam.players)myTeam.players=[];
-    myTeam.players.push({id:player.id,name:player.name,pos:player.pos,rating:player.rating,fitness:player.fitness||100,value:player.value,club:G.myName});
+    if(!myTeam.bench)myTeam.bench=[];myTeam.bench.push({id:player.id,name:player.name,pos:player.pos,rating:player.rating,fitness:player.fitness||100,value:player.value,club:G.myName});
     if(sourceTeam){
       if(!aiTeam.players)aiTeam.players=[];
       aiTeam.players=aiTeam.players.filter(function(p){return p.id!==playerId;});
@@ -2101,17 +2107,65 @@ function renderTransfers(){
 function showTrxTab(tab){
   var sp=document.getElementById('trx-scout-panel');
   var cp=document.getElementById('trx-club-panel');
+  var vp=document.getElementById('trx-sell-panel');
   var sb=document.getElementById('btn-trx-scout');
   var cb=document.getElementById('btn-trx-club');
+  var vb=document.getElementById('btn-trx-sell');
   if(!sp||!cp)return;
+  sp.style.display='none';cp.style.display='none';if(vp)vp.style.display='none';
+  [sb,cb,vb].forEach(function(b){if(b)b.classList.remove('active');});
   if(tab==='club'){
-    sp.style.display='none';cp.style.display='';
-    if(sb)sb.classList.remove('active');if(cb)cb.classList.add('active');
+    cp.style.display='';if(cb)cb.classList.add('active');
     populateClubFilter();renderClubSearch();
+  } else if(tab==='sell'){
+    if(vp)vp.style.display='';if(vb)vb.classList.add('active');
+    renderSellTab();
   } else {
-    sp.style.display='';cp.style.display='none';
-    if(sb)sb.classList.add('active');if(cb)cb.classList.remove('active');
+    sp.style.display='';if(sb)sb.classList.add('active');
+    renderTransfers();
   }
+}
+function renderSellTab(){
+  var el=document.getElementById('trx-sell-content');
+  if(!el||!G)return;
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  var all=(myTeam.starters||[]).concat(myTeam.bench||[]);
+  if(!all.length){el.innerHTML='<p style="color:#888;padding:16px">Geen spelers in selectie.</p>';return;}
+  var posOrder={GK:0,DEF:1,MID:2,FWD:3};
+  all.sort(function(a,b){return (posOrder[a.pos]||4)-(posOrder[b.pos]||4)||b.rating-a.rating;});
+  var html='<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">';
+  all.forEach(function(p){
+    var price=Math.round((p.value||100000)*0.8);
+    var isStarter=myTeam.starters&&myTeam.starters.find(function(s){return s.id===p.id;});
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a2e;border-radius:8px;padding:10px 14px;gap:8px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div><span style="font-size:11px;color:#aaa;margin-right:4px">'+p.pos+'</span>'
+      +'<strong>'+p.name+'</strong>'
+      +(isStarter?' <span style="font-size:10px;background:#e74c3c;color:#fff;border-radius:3px;padding:1px 5px">Basis</span>':'')
+      +'</div>'
+      +'<div style="font-size:11px;color:#aaa;margin-top:2px">⭐'+p.rating+' · MV: '+fmtMoney(p.value||0)+'</div>'
+      +'</div>'
+      +'<button onclick="sellPlayer('+p.id+')" style="background:#27ae60;color:#fff;border:none;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:13px;white-space:nowrap;flex-shrink:0">💰 '+fmtMoney(price)+'</button>'
+      +'</div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+function sellPlayer(id){
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam){toast('❌ Team niet gevonden.');return;}
+  var player=null,fromArr=null,idx=-1;
+  if(myTeam.starters){idx=myTeam.starters.findIndex(function(p){return p.id===id;});if(idx>=0){player=myTeam.starters[idx];fromArr=myTeam.starters;}}
+  if(!player&&myTeam.bench){idx=myTeam.bench.findIndex(function(p){return p.id===id;});if(idx>=0){player=myTeam.bench[idx];fromArr=myTeam.bench;}}
+  if(!player){toast('❌ Speler niet gevonden.');return;}
+  var price=Math.round((player.value||100000)*0.8);
+  fromArr.splice(idx,1);
+  myTeam.budget=(myTeam.budget||0)+price;
+  G.transfersThisSeason=(G.transfersThisSeason||0)+1;
+  toast('✅ '+player.name+' verkocht voor '+fmtMoney(price)+'!');
+  saveGame();
+  renderSellTab();
 }
 function populateClubFilter(){
   var sel=document.getElementById('filter-club');
