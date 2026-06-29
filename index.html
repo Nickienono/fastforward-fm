@@ -967,7 +967,7 @@ async function abandonCareer() {
 async function logOut() {
   if (!confirm('Weet je zeker dat je wilt uitloggen? Je carrièrevoortgang is veilig opgeslagen.')) return;
   await saveGame();
-  clearInterval(inactivityTimer);
+  clearTimeout(_inactivityTimer);
   localStorage.removeItem('ffm_user');
   G = null;
   var u = document.getElementById('inp-username'); if (u) u.value = '';
