@@ -1325,6 +1325,7 @@ function startGame(teamIdx) {
   showScreen('main');
   G.matchLineup = null;
   G.plannedSubs = null;
+  populateAITeams();
   renderAll();
   saveGame(); // sla op direct na clubkeuze
 }
@@ -1580,6 +1581,25 @@ function generateMarket(){
   });
   if(typeof G!=='undefined'&&G){G.scoutPool=pool;}
   return pool;
+}
+function populateAITeams(){
+  if(!G||!G.teams)return;
+  var TIERS={'Ajax':80,'PSV':80,'Feyenoord':79,'AZ':76,'FC Twente':75,'FC Utrecht':74,'sc Heerenveen':72,'Vitesse':71,'NEC':71,'Sparta Rotterdam':70,'Go Ahead Eagles':70,'Fortuna Sittard':69,'PEC Zwolle':68,'RKC Waalwijk':68,'NAC Breda':68,'FC Groningen':67,'Almere City':67,'Heracles Almelo':68};
+  var POSITIONS=['GK','GK','DEF','DEF','DEF','DEF','DEF','MID','MID','MID','MID','MID','FWD','FWD','FWD','FWD','DEF','MID'];
+  var FIRST=['Daan','Tom','Lars','Max','Sven','Jordy','Bas','Niels','Mark','Kevin','Dylan','Robin','Stefan','Dennis','Rick','Arjen','Frank','Johan','Ruud','Wesley','Virgil','Donny','Davy','Tim','Sander','Luuk','Nathan','Ryan','Quincy'];
+  var LAST=['de Jong','van Dijk','Janssen','Peters','Bakker','Visser','Meyer','Smits','de Boer','Koeman','Robben','Sneijder','van Persie','Huntelaar','Kluivert','Davids','Bergkamp','van Nistelrooy','van der Vaart','Heitinga','Bouma','Mathijsen','de Graaf','Willems','Boeuf','Clasie','Fer','Vilhena','El Ahmadi'];
+  var pid=90000+Math.floor(Math.random()*9000);
+  G.teams.forEach(function(team){
+    if(team.players&&team.players.length>0)return;
+    var base=TIERS[team.name]||72;
+    team.players=POSITIONS.map(function(pos){
+      var r=Math.min(99,Math.max(50,base+Math.floor(Math.random()*11)-5));
+      var val=Math.round(Math.pow((r-50)/10,2)*80000+30000);
+      var fn=FIRST[Math.floor(Math.random()*FIRST.length)];
+      var ln=LAST[Math.floor(Math.random()*LAST.length)];
+      return {id:++pid,name:fn+' '+ln,pos:pos,rating:r,value:val,fitness:100,club:team.name};
+    });
+  });
 }
 function refreshMarket(){
   var mt=G.teams.find(function(t){return t.name===G.myName;});
@@ -2124,9 +2144,8 @@ function renderClubSearch(){
   });
   var hasPlayers=aiTeams.some(function(t){return t.players&&t.players.length>0;});
   if(!results.length){
-    el.innerHTML=hasPlayers
-      ?'<p style="color:var(--dim);text-align:center;padding:20px">Geen spelers gevonden.</p>'
-      :'<p style="color:var(--dim);text-align:center;padding:20px">⚠️ AI teams hebben nog geen spelers. Speel een wedstrijd om ze te genereren.</p>';
+    if(!hasPlayers){populateAITeams();renderClubSearch();return;}
+    el.innerHTML='<p style="color:var(--dim);text-align:center;padding:20px">Geen spelers gevonden.</p>';
     return;
   }
   var factors=[0.35,0.55,0.75,1.0];
