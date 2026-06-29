@@ -381,6 +381,8 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .neg-budget-warn { color: var(--red); font-size: 0.78rem; text-align: center; margin-top: 6px; }
 .tf-club-tag { font-size: 0.7rem; background: var(--panel2); border-radius: 4px; padding: 2px 6px; color: var(--dim); }
 .scout-section { margin-top: 20px; }
+.btn-logout { background: none; border: 1px solid var(--border); color: var(--dim); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all .15s; }
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
 </style>
 </head>
 <body>
@@ -584,6 +586,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div class="save-progress-bar"><div class="save-progress-fill" id="save-progress-fill" style="width:0%"></div></div>
     <button class="btn-resume" onclick="resumeFromSaveScreen()">▶ VERVOLG CARRIÈRE</button>
     <button class="btn-abandon-career" onclick="abandonCareer()">❌ Geef Carrière Op</button>
+    <button class="btn-logout" onclick="logOut()">🚪 Uitloggen</button>
   </div>
   <div class="lb-wrap" id="save-lb-wrap" style="display:none">
     <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 0 8px">🌍 Globale Ranglijst</div>
@@ -959,6 +962,19 @@ async function abandonCareer() {
   G = {};
   buildTeamSelect();
   showScreen('select');
+}
+function logOut() {
+  if (!confirm('Weet je zeker dat je wilt uitloggen? Je carrièrevolg is veilig opgeslagen.')) return;
+  clearInterval(inactivityTimer);
+  localStorage.removeItem('ffm_user');
+  G = null;
+  var u = document.getElementById('inp-username'); if (u) u.value = '';
+  var t = document.getElementById('inp-tag');      if (t) t.value = '';
+  var e = document.getElementById('login-error');   if (e) e.textContent = '';
+  var s1 = document.getElementById('login-step1'); if (s1) s1.style.display = '';
+  var s2 = document.getElementById('login-step2'); if (s2) s2.style.display = 'none';
+  document.getElementById('btn-login').disabled = false;
+  showScreen('login');
 }
 
 // ══════════════════════════════════════════════════
