@@ -2150,9 +2150,12 @@ function renderClubSearch(){
       +'<div class="club-player-meta">⭐ '+p.rating+' 💰 €'+fmtV(p.value)+'</div>'
       +'<div class="club-player-meta" style="color:var(--accent)">'+r.teamName+'</div>'
       +'</div>'
-      +'<button onclick="makeOffer(1.0,'+p.value+','+p.id+',''+r.teamName+'')" '+dis+' style="padding:7px 12px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;white-space:nowrap">'+btnLabel+'</button>'
+      +'<button onclick="handleClubBuy(this)" data-val="'+p.value+'" data-id="'+p.id+'" data-team="'+r.teamName+'" '+dis+' style="padding:7px 12px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;white-space:nowrap">'+btnLabel+'</button>'
       +'</div>';
   }).join('');
+}
+function handleClubBuy(btn){
+  makeOffer(1.0,+btn.dataset.val,+btn.dataset.id,btn.dataset.team);
 }
 
 // ══════════════════════════════════════════════════
