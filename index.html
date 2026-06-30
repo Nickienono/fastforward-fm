@@ -1831,6 +1831,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
   } else {
     var attLeft=(!sourceTeam&&player.attemptsLeft!==undefined)?player.attemptsLeft:-1;
     toast('❌ Bod afgewezen ('+(Math.round(chance*100))+'% kans)'+(attLeft>=0?' — '+attLeft+' pogingen over':'')+'!');
+    saveGame();
   }
   renderTransfers();
 }
