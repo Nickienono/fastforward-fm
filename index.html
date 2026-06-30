@@ -1583,7 +1583,7 @@ function generateMarket(){
   var pool=posList.map(function(p){
     var r=ri(lo,hi);
     return {id:++_pid,attemptsLeft:8,name:randomName(),pos:p,rating:r,
-            fitness:ri(80,100),value:calcValue(r),club:'Vrije agent',source:'free'};
+            fitness:ri(80,100),value:calcValue(r),club:'Vrije agent',source:'free',age:Math.floor(Math.random()*24)+17};
   });
   if(typeof G!=='undefined'&&G){G.scoutPool=pool;}
   return pool;
@@ -1660,7 +1660,7 @@ function sellPlayer(pid) {
   } else {
     toast(`${p.name} verkocht voor ${fmtMoney(p.value)}.`);
   }
-  G.market.push({ ...p, club: 'Vrije agent' });
+  G.market.push({ ...p, club: 'Vrije agent', age: p.age || (Math.floor(Math.random()*24)+17) });
   renderAll();
   saveGame();
 }
