@@ -1816,7 +1816,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
     myTeam.budget-=offerPrice;
     G.transfersThisSeason=(G.transfersThisSeason||0)+1;
     if(!myTeam.players)myTeam.players=[];
-    if(!myTeam.bench)myTeam.bench=[];myTeam.bench.push({id:player.id,name:player.name,pos:player.pos,rating:player.rating,fitness:player.fitness||100,value:player.value,club:G.myName});
+    if(!myTeam.bench)myTeam.bench=[];myTeam.bench.push({id:player.id,name:player.name,pos:({'GK':'K','DEF':'V','MID':'M','FWD':'A'}[player.pos]||player.pos),rating:player.rating,fitness:player.fitness||100,value:player.value,club:G.myName});
     if(sourceTeam){
       if(!aiTeam.players)aiTeam.players=[];
       aiTeam.players=aiTeam.players.filter(function(p){return p.id!==playerId;});
@@ -2029,18 +2029,16 @@ function removeBaseSub(i) {
 }
 function renderOpsteliling() {
   const myTeam = G.teams.find(t => t.name === G.myName);
-  const rows = [
-    myTeam.starters.filter(p => p.pos==='A'),
-    myTeam.starters.filter(p => p.pos==='M'),
-    myTeam.starters.filter(p => p.pos==='V'),
-    myTeam.starters.filter(p => p.pos==='K'),
-  ];
+  const _np=p=>({'GK':'K','DEF':'V','MID':'M','FWD':'A'}[p.pos]||p.pos);
+  const _pm={A:[],M:[],V:[],K:[]};
+  myTeam.starters.forEach((p,i)=>{var k=_np(p);if(_pm[k])_pm[k].push({...p,pos:k,_si:i});});
+  const rows=[_pm.A,_pm.M,_pm.V,_pm.K];
 
   document.getElementById('pitch').innerHTML = rows.map(row =>
     `<div class="pitch-row">${row.map(p => {
       const idx = myTeam.starters.indexOf(p);
-      const sel = selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===idx;
-      return `<div class="pcard${sel?' selected':''}" onclick="selectPlayer('pitch',${idx})">
+      const sel = selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===p._si;
+      return `<div class="pcard${sel?' selected':''}" onclick="selectPlayer('pitch',${p._si})">
         <div class="prating">${p.rating}</div>
         <div class="pname">${p.name.split(' ').pop()}</div>
         <div class="ppos">${p.pos}${p.age?' · '+p.age:''}</div>
