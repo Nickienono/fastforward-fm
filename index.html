@@ -559,7 +559,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       </div>
       <div id="trx-sell-panel" style="display:none">
         <h2 style="margin:0 0 8px">💰 Spelers Verkopen</h2>
-        <p style="color:#aaa;font-size:13px;margin:0 0 12px">80% van marktwaarde · telt mee als transfer</p>
+        <p style="color:#aaa;font-size:13px;margin:0 0 12px">100% van marktwaarde · telt mee als transfer</p>
         <div id="trx-sell-content"></div>
       </div>
     </div>
@@ -2136,7 +2136,7 @@ function renderSellTab(){
   all.sort(function(a,b){return (posOrder[a.pos]||4)-(posOrder[b.pos]||4)||b.rating-a.rating;});
   var html='<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">';
   all.forEach(function(p){
-    var price=Math.round((p.value||100000)*0.8);
+    var price=(p.value||100000);
     var isStarter=myTeam.starters&&myTeam.starters.find(function(s){return s.id===p.id;});
     html+='<div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a2e;border-radius:8px;padding:10px 14px;gap:8px">'
       +'<div style="flex:1;min-width:0">'
@@ -2159,7 +2159,7 @@ function sellPlayer(id){
   if(myTeam.starters){idx=myTeam.starters.findIndex(function(p){return p.id===id;});if(idx>=0){player=myTeam.starters[idx];fromArr=myTeam.starters;}}
   if(!player&&myTeam.bench){idx=myTeam.bench.findIndex(function(p){return p.id===id;});if(idx>=0){player=myTeam.bench[idx];fromArr=myTeam.bench;}}
   if(!player){toast('❌ Speler niet gevonden.');return;}
-  var price=Math.round((player.value||100000)*0.8);
+  var price=(player.value||100000);
   fromArr.splice(idx,1);
   myTeam.budget=(myTeam.budget||0)+price;
   G.transfersThisSeason=(G.transfersThisSeason||0)+1;
