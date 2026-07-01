@@ -2396,6 +2396,7 @@ function sellPlayer(id){
   if(!player){toast('❌ Speler niet gevonden.');return;}
   var price=(player.value||100000);
   fromArr.splice(idx,1);
+  if(fromArr===myTeam.starters){var bench=myTeam.bench||[];var benchIdx=bench.findIndex(function(b){return b.pos===player.pos&&!b._empty;});if(benchIdx>=0){var sub=bench.splice(benchIdx,1)[0];myTeam.starters.splice(idx,0,sub);}else{myTeam.starters.splice(idx,0,{_empty:true,pos:player.pos});}}
   myTeam.budget=(myTeam.budget||0)+price;
   G.transfersThisSeason=(G.transfersThisSeason||0)+1;
   toast('✅ '+player.name+' verkocht voor '+fmtMoney(price)+'!');
