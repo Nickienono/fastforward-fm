@@ -1503,8 +1503,8 @@ function buildSchedule(names) {
 
 function effectiveRating(p) { return p.rating * (0.55 + p.fitness / 222); }
 
-function teamAttack(team)  { return avg(team.starters.filter(p => p.pos==='A'||p.pos==='M').map(effectiveRating)); }
-function teamDefense(team) { return avg(team.starters.filter(p => p.pos==='V'||p.pos==='K').map(effectiveRating)); }
+function teamAttack(team)  { return avg(team.starters.filter(p => (p.pos==='A'||p.pos==='M')&&!p._empty).map(effectiveRating)); }
+function teamDefense(team) { return avg(team.starters.filter(p => (p.pos==='V'||p.pos==='K')&&!p._empty).map(effectiveRating)); }
 
 function poissonSample(lambda) {
   lambda = Math.max(0.1, lambda);
@@ -1813,6 +1813,7 @@ function sellPlayer(pid) {
       myTeam.starters.splice(idx, 0, sub);
       toast(`${p.name} verkocht. ${sub.name} in de basis (${p.pos}).`);
     } else {
+      myTeam.starters.splice(idx, 0, {_empty:true, pos:p.pos});
       toast(`${p.name} verkocht. Geen wisselaar voor positie ${p.pos}.`);
     }
   } else {
@@ -2291,7 +2292,7 @@ function renderSellTab(){
   if(!el||!G)return;
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
   if(!myTeam)return;
-  var all=(myTeam.starters||[]).concat(myTeam.bench||[]);
+  var all=(myTeam.starters||[]).filter(function(p){return !p._empty;}).concat(myTeam.bench||[]);
   if(!all.length){el.innerHTML='<p style="color:#888;padding:16px">Geen spelers in selectie.</p>';return;}
   var posOrder={GK:0,DEF:1,MID:2,FWD:3};
   all.sort(function(a,b){return (posOrder[a.pos]||4)-(posOrder[b.pos]||4)||b.rating-a.rating;});
@@ -2317,7 +2318,7 @@ function renderFreeAgents(){
   var el=document.getElementById('scout-free-list');
   if(!el||!G||!G.freeAgentsDatabase) return;
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
-  var myOvr=myTeam?Math.round(avg((myTeam.starters||[]).map(function(p){return effectiveRating(p);}))):70;
+  var myOvr=myTeam?Math.round(avg((myTeam.starters||[]).filter(function(p){return !p._empty;}).map(function(p){return effectiveRating(p);}))):70;
   var budget=myTeam?(myTeam.budget||0):0;
   var _ovr=myOvr>5?myOvr:70;  var pool=G.freeAgentsDatabase.filter(function(a){return Math.abs(a.rating-_ovr)<=25;}).slice(0,15);  if(!pool.length)pool=G.freeAgentsDatabase.slice(0,15);
   var budgetDisp=document.getElementById('scout-budget-display');
@@ -2734,7 +2735,7 @@ function openPreMatch() {
 
   const myTeam = G.teams.find(t => t.name === G.myName);
   G.matchLineup = {
-    starters: myTeam.starters.map(p => ({...p})),
+    starters: (function(){var FORM=['K','V','V','V','V','M','M','M','A','A','A'];return Array.from({length:11},function(_,i){return myTeam.starters[i]?{...myTeam.starters[i]}:{_empty:true,pos:FORM[i]};});}()),
     bench:    myTeam.bench.map(p => ({...p})),
   };
   G.plannedSubs = [...(G.basePlannedSubs || [])];
@@ -2767,6 +2768,7 @@ function renderPreMatch() {
   const pitchHTML = rows.map(row =>
     '<div class="pitch-row">' + row.map(p => {
       const idx = starters.indexOf(p);
+      if(p&&p._empty)return '<div class="pcard empty-slot" onclick="selectPreMatchPlayer('pitch','+idx+')" style="border:2px dashed rgba(255,255,255,.25);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:72px;gap:3px;cursor:pointer"><div style="font-size:1.2rem;color:rgba(255,255,255,.35)">+</div><div style="font-size:.72rem;color:var(--dim)">'+p.pos+'</div></div>';
       const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === idx;
       return '<div class="pcard '+posClass(p.pos)+'' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'pitch\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
@@ -2822,7 +2824,7 @@ function selectPreMatchPlayer(from, idx) {
   } else if (sp.from === 'bench' && from === 'bench') {
     [ml.bench[sp.idx], ml.bench[idx]] = [ml.bench[idx], ml.bench[sp.idx]];
   } else if (sp.from === 'pitch' && from === 'bench') {
-    [ml.starters[sp.idx], ml.bench[idx]] = [ml.bench[idx], ml.starters[sp.idx]];
+    if(ml.starters[sp.idx]&&ml.starters[sp.idx]._empty){var bPlayer=ml.bench.splice(idx,1)[0];ml.starters[sp.idx]=bPlayer;var myT=G.teams.find(function(t){return t.name===G.myName;});if(myT){myT.starters=ml.starters.map(function(p){return Object.assign({},p);});var bi=myT.bench.findIndex(function(p){return p.id===bPlayer.id;});if(bi>=0)myT.bench.splice(bi,1);saveGame();}}else{[ml.starters[sp.idx],ml.bench[idx]]=[ml.bench[idx],ml.starters[sp.idx]];}
   } else {
     [ml.starters[idx], ml.bench[sp.idx]] = [ml.bench[sp.idx], ml.starters[idx]];
   }
