@@ -479,7 +479,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       <img id="top-logo" src="" alt="" style="display:none" onerror="this.style.display='none'">
       <span id="top-club">–</span>
     </div>
-    <div class="stat">💰 <b id="top-budget">–</b></div>
+    <div class="stat">👤 <b id="top-username">Gast</b></div>
     <div class="stat">📊 <b id="top-pos">–</b>e</div>
     <div class="round">Ronde <b id="top-round">0</b>/<span id="top-round-total">34</span></div>
     <button class="btn-newgame btn-newgame--abandon" onclick="abandonCareer()" title="Geef carrière op">❌ Carrière Op</button>
@@ -553,7 +553,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <button class="trx-sub-btn active" id="btn-trx-scout" onclick="showTrxTab('scout')">🆓 Scout &amp; Koop</button>
         <button class="trx-sub-btn" id="btn-trx-club" onclick="showTrxTab('club')">🔍 Club Database</button>
         <button class="trx-sub-btn" id="btn-trx-sell" onclick="showTrxTab('sell')">💰 Verkopen</button>
-        <button class="trx-sub-btn" id="btn-trx-free" onclick="showTrxTab('free')">🆓 Vrije Spelers</button>
+        
       </div>
       <div id="trx-scout-panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -561,6 +561,12 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
           <button class="btn-refresh" onclick="refreshMarket()">🔄 Verversen (-€10k)</button>
         </div>
         <div id="scout-pool-list"></div>
+      
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.12);margin:16px 0">
+        <h3 style="margin:0 0 10px;font-size:1rem;color:var(--accent)">🆓 Vrije Spelers (Tekengeld)</h3>
+        <p style="font-size:0.8rem;color:#aaa;margin:0 0 6px">Spelers zonder club · max 8 pogingen · max 15 getoond (OVR ±10)</p>
+        <div style="font-size:0.85rem;color:#fff;background:rgba(255,255,255,.06);border-radius:6px;padding:6px 10px;margin-bottom:10px">💰 <b id="scout-budget-display">–</b></div>
+        <div id="scout-free-list"></div>
       </div>
       <div id="trx-club-panel" style="display:none">
         <div class="club-db-filters">
@@ -613,11 +619,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <div class="save-meta-label">Budget</div>
         <div id="save-budget" class="save-meta-value">–</div>
       </div>
-      <div id="trx-free-panel" style="display:none">
-        <h2 style="margin:0 0 4px;font-size:1rem">🆓 Vrije Spelers (Tekengeld)</h2>
-        <p style="color:#aaa;font-size:12px;margin:0 0 12px">Spelers zonder club · betaal tekengeld · max 8 pogingen per speler</p>
-        <div id="free-agents-list"></div>
-      </div>
+      
     </div>
     <div id="save-progress-label" style="font-size:.75rem;color:var(--dim);margin-bottom:2px">Voortgang seizoen</div>
     <div class="save-progress-bar"><div class="save-progress-fill" id="save-progress-fill" style="width:0%"></div></div>
@@ -1950,7 +1952,7 @@ function renderAll() {
 
 function updateTopBar() {
   const myTeam = G.teams.find(t => t.name === G.myName);
-  document.getElementById('top-budget').textContent = fmtMoney(myTeam.budget);
+  document.getElementById('top-username').textContent = CURRENT_USER ? CURRENT_USER.username : 'Gast';
   const sorted = getSorted();
   document.getElementById('top-pos').textContent = sorted.findIndex(t => t.name === G.myName) + 1;
   document.getElementById('top-round').textContent = G.round;
@@ -2212,31 +2214,25 @@ function renderTransfers(){
 function showTrxTab(tab){
   var sp=document.getElementById('trx-scout-panel');
   var cp=document.getElementById('trx-club-panel');
-  var vp=document.getElementById('trx-sell-panel');
-  var fp=document.getElementById('trx-free-panel');
-  var sb=document.getElementById('btn-trx-scout');
-  var cb=document.getElementById('btn-trx-club');
-  var vb=document.getElementById('btn-trx-sell');
-  var fb=document.getElementById('btn-trx-free');
-  if (!sp||!cp) return;
-  [sp,cp,vp,fp].forEach(function(p){if(p)p.style.display='none';});
-  [sb,cb,vb,fb].forEach(function(b){if(b)b.classList.remove('active');});
-  if (tab==='club'){
-    cp.style.display='';
-    if (cb) cb.classList.add('active');
-    populateClubFilter();renderClubSearch();
-  } else if (tab==='sell'){
-    if (vp) vp.style.display='';
-    if (vb) vb.classList.add('active');
-    renderSellTab();
-  } else if (tab==='free'){
-    if (fp) fp.style.display='';
-    if (fb) fb.classList.add('active');
+  var sel=document.getElementById('trx-sell-panel');
+  var btns=document.querySelectorAll('.trx-sub-btn');
+  [sp,cp,sel].forEach(function(p){if(p)p.style.display='none';});
+  btns.forEach(function(b){b.classList.remove('active');});
+  if(tab==='scout'){
+    if(sp)sp.style.display='block';
+    var b=document.getElementById('btn-trx-scout');
+    if(b)b.classList.add('active');
     renderFreeAgents();
-  } else {
-    sp.style.display='';
-    if (sb) sb.classList.add('active');
+  }else if(tab==='club'){
+    if(cp)cp.style.display='block';
+    var b=document.getElementById('btn-trx-club');
+    if(b)b.classList.add('active');
     renderTransfers();
+  }else if(tab==='sell'){
+    if(sel)sel.style.display='block';
+    var b=document.getElementById('btn-trx-sell');
+    if(b)b.classList.add('active');
+    renderSellTab();
   }
 }
 function renderSellTab(){
@@ -2267,12 +2263,14 @@ function renderSellTab(){
   el.innerHTML=html;
 }
 function renderFreeAgents(){
-  var el=document.getElementById('free-agents-list');
+  var el=document.getElementById('scout-free-list');
   if(!el||!G||!G.freeAgentsDatabase) return;
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
   var myOvr=myTeam?(myTeam.starters||[]).concat(myTeam.bench||[]).reduce(function(s,p){return s+p.rating;},0)/Math.max(1,(myTeam.starters||[]).length+(myTeam.bench||[]).length):70;
   var budget=myTeam?(myTeam.budget||0):0;
   var pool=G.freeAgentsDatabase.filter(function(a){return Math.abs(a.rating-myOvr)<=10;}).slice(0,15);
+  var budgetDisp=document.getElementById('scout-budget-display');
+  if(budgetDisp)budgetDisp.textContent='Budget: '+fmtMoney(budget);
   if(!pool.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Geen vrije spelers beschikbaar in jouw OVR-range ('+(myOvr|0)+' ±10).</p>';return;}
   el.innerHTML=pool.map(function(a){
     var tg=a.tekengeld;
