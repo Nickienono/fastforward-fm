@@ -215,7 +215,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .fitness-fill.lo  { background: var(--red); }
 .bench-divider { border-top: 1px dashed rgba(255,255,255,.18); margin: 6px 0 10px; text-align: center; font-size: .6rem; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; padding-top: 8px; }
 .bench-in-pitch { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-bottom: 6px; }
-.pcard.bench-card { background: rgba(0,0,0,.45); opacity: .88; }
+.pcard.bench-card { opacity: .88; }
 .pcard.bench-card:hover { opacity: 1; }
 .pcard.bench-card.selected { opacity: 1; }
 
@@ -2711,7 +2711,7 @@ function renderPreMatch() {
   // Bank spelers als pcard vakjes onderaan
   const benchHTML = bench.map((p, idx) => {
     const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
-    return '<div class="pcard bench-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
+    return '<div class="pcard '+posClass(p.pos)+' bench-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
       '<div class="prating">' + p.rating + '</div>' +
       '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
       '<div class="ppos">' + p.pos + '</div>' +
