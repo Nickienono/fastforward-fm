@@ -2318,12 +2318,14 @@ function renderFreeAgents(){
   var budgetDisp=document.getElementById('scout-budget-display');
   if(budgetDisp)budgetDisp.textContent='Budget: '+fmtMoney(budget);
   if(!pool.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Geen vrije spelers beschikbaar in jouw OVR-range ('+(myOvr|0)+' ±10).</p>';return;}
-  var _fd=G.freeSigningsDone||0;var _cap='<p style="font-size:0.8rem;text-align:center;margin:0 0 8px;color:'+(_fd>=5?'#da3633':'#8b949e')+'">🎯 '+_fd+'/5 vrije spelers getekend ● max 5 per seizoen</p>';el.innerHTML=_cap+pool.map(function(a){
+  var _fd=G.freeSigningsDone||0;var _cap='<p style="font-size:0.8rem;text-align:center;margin:0 0 8px;color:'+(_fd>=3?'#da3633':'#8b949e')+'">🎯 '+_fd+'/3 vrije spelers getekend ● max 3 per seizoen</p>';
+  var _refreshBtn='<div style="text-align:center;margin:0 0 8px"><button onclick="refreshFreeAgentPool()" style="background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.4);color:#f0a500;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:0.8rem">🔄 Nieuwe poule (€1M)</button></div>';
+  el.innerHTML=_cap+_refreshBtn+pool.map(function(a){
     var tg=a.tekengeld;
     var pcts=[25,50,75,100];
     var btns=pcts.map(function(p){
       var amt=Math.round(tg*p/100);
-      var dis=(amt>budget||(G.freeSigningsDone||0)>=5||a.attemptsLeft<=0)?'disabled':'';      var lbl=amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K');
+      var dis=(amt>budget||(G.freeSigningsDone||0)>=3||a.attemptsLeft<=0)?'disabled':'';      var lbl=amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K');
       return '<button '+dis+' onclick="makeSigningBid('+a.id+','+p+')" style="font-size:11px;padding:4px 6px;margin:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;cursor:pointer;">'+p+'% ('+lbl+')</button>';
     }).join('');
     var _bg=a.attemptsLeft<=0?'rgba(218,54,51,.15)':'rgba(255,255,255,.05)';
@@ -2341,7 +2343,7 @@ function makeSigningBid(agentId, pct){
   if(!myTeam) return;
   var a=G.freeAgentsDatabase.find(function(x){return x.id===agentId;});
   if(!a||a.attemptsLeft<=0) return;
-  if((G.freeSigningsDone||0)>=5){toast('❌ Max 5 vrije spelers via tekengeld per seizoen.');return;}
+  if((G.freeSigningsDone||0)>=3){toast('❌ Max 3 vrije spelers via tekengeld per seizoen.');return;}
   var amt=Math.round(a.tekengeld*pct/100);
   if(amt>(myTeam.budget||0)){toast('Niet genoeg budget!');return;}
   a.attemptsLeft--;
@@ -2365,6 +2367,18 @@ function makeSigningBid(agentId, pct){
   renderFreeAgents();
   renderAll();
 }
+function refreshFreeAgentPool(){
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  if((myTeam.budget||0)<1000000){toast('❌ Niet genoeg budget voor een nieuwe poule (€1M).');return;}
+  myTeam.budget-=1000000;
+  var db=G.freeAgentsDatabase;
+  for(var i=db.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=db[i];db[i]=db[j];db[j]=tmp;}
+  saveGame();
+  renderFreeAgents();
+  toast('🔄 Nieuwe spelerpoule geladen! (-€1M)');
+}
+
 
 function sellPlayer(id){
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
