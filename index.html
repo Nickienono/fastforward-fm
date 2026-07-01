@@ -2202,9 +2202,9 @@ function removeBaseSub(i) {
 function renderOpsteliling() {
   const myTeam = G.teams.find(t => t.name === G.myName);
   const _np=p=>({'GK':'GK','DEF':'V','MID':'M','FWD':'A'}[p.pos]||p.pos);
-  const _pm={A:[],M:[],V:[],K:[]};
+  const _pm={A:[],M:[],V:[],GK:[]};
   myTeam.starters.forEach((p,i)=>{var k=_np(p);if(_pm[k])_pm[k].push({...p,pos:k,_si:i});});
-  const rows=[_pm.A,_pm.M,_pm.V,_pm.K];
+  const rows=[_pm.A,_pm.M,_pm.V,_pm.GK];
 
   document.getElementById('pitch').innerHTML = rows.map(row =>
     `<div class="pitch-row">${row.map(p => {
