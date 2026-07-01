@@ -875,7 +875,20 @@ async function launchGame(hasSave) {
       G.scoutPool               = G.scoutPool               || [];
       G.scoutPoolRound          = G.scoutPoolRound          !== undefined ? G.scoutPoolRound : -1;
         G.results                 = G.results                 || [];
-        renderAll();
+          // Hergenereer schedule als het niet opgeslagen was (slim save)
+        if (!G.schedule || !G.schedule.length) {
+          G.schedule    = buildSchedule(G.teams.map(function(t){return t.name;}));
+          G.totalRounds = G.schedule.length;
+        }
+        // Geef ID aan AI-spelers die er geen hebben (fix onderhandelen)
+        var _mpid = _pid;
+        G.teams.forEach(function(t){
+          [].concat(t.starters||[]).concat(t.bench||[]).forEach(function(p){
+            if (!p.id) p.id = ++_mpid;
+          });
+        });
+        _pid = _mpid;
+      renderAll();
         showSaveScreen(false);
         startInactivityTimer();
         return;
@@ -888,12 +901,25 @@ async function launchGame(hasSave) {
 async function saveGame() {
   if (!CURRENT_USER || !G || !G.teams) return;
   try {
-    await fetch('/api/save', {
+    // Sla een afgeslankte versie op zodat we onder de 1MB body-limiet blijven.
+    var slim = Object.assign({}, G, {
+      schedule: null,
+      results:  (G.results  || []).slice(-5),
+      market:   (G.market   || []).slice(0, 15),
+    });
+    var res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: CURRENT_USER.username, tag: CURRENT_USER.tag, gameState: G }),
+      body: JSON.stringify({ username: CURRENT_USER.username, tag: CURRENT_USER.tag, gameState: slim }),
     });
-  } catch (e) { console.warn('Auto-save mislukt:', e); }
+    if (!res.ok) {
+      console.warn('Auto-save mislukt (HTTP ' + res.status + ')');
+      toast('⚠️ Opslaan mislukt! Verbindingsprobleem.');
+    }
+  } catch (e) {
+    console.warn('Auto-save mislukt:', e);
+    toast('⚠️ Opslaan mislukt!');
+  }
 }
 let selectedPlayer    = null;
 let _pid              = 100000;
@@ -1244,6 +1270,7 @@ function buildSquad(teamData) {
         : makeFallbackPlayer(pos, teamData.tier);
       p.baseRating   = p.baseRating   || p.rating;
       p.growthPoints = p.growthPoints || 0;
+      if (!p.id) p.id = ++_pid;
       result.push(p);
     }
     return result;
@@ -1746,6 +1773,7 @@ function openNegotiation(pid, fromTeamName) {
     return;
   }
   const myTeam = G.teams.find(t => t.name===G.myName);
+  if (!myTeam) { toast('Teamdata niet beschikbaar.'); return; }
   let player = null;
   if (!fromTeamName) {
     player = G.market.find(p => p.id===pid);
@@ -1756,7 +1784,7 @@ function openNegotiation(pid, fromTeamName) {
   }
   // Fallback: generated scout pool player (not in AI roster)
   if (!player && G.scoutPool) { const _sp=G.scoutPool.find(function(p){ return p.id===pid; }); if(_sp) player={..._sp}; }
-  if (!player) return;
+  if (!player) { toast('Speler niet meer beschikbaar.'); return; }
   NEGOTIATE_PID = pid; NEGOTIATE_FROM_TEAM = fromTeamName;
   const askingPrice = fromTeamName ? Math.round(player.value*1.25) : player.value;
   document.getElementById('neg-name').textContent = player.name;
