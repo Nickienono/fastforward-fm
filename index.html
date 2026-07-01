@@ -2271,19 +2271,21 @@ function renderFreeAgents(){
   if(!el||!G||!G.freeAgentsDatabase) return;
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
   var myOvr=myTeam?(myTeam.starters||[]).concat(myTeam.bench||[]).reduce(function(s,p){return s+p.rating;},0)/Math.max(1,(myTeam.starters||[]).length+(myTeam.bench||[]).length):70;
-  var pool=G.freeAgentsDatabase.filter(function(a){ return a.attemptsLeft>0 && Math.abs(a.rating-myOvr)<=10; });
   var budget=myTeam?(myTeam.budget||0):0;
-  if(!pool.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Geen vrije spelers beschikbaar in jouw OVR-range.</p>';return;}
+  var pool=G.freeAgentsDatabase.filter(function(a){return Math.abs(a.rating-myOvr)<=10;}).slice(0,15);
+  if(!pool.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Geen vrije spelers beschikbaar in jouw OVR-range ('+(myOvr|0)+' ±10).</p>';return;}
   el.innerHTML=pool.map(function(a){
     var tg=a.tekengeld;
-    var pct=[25,50,75,100];
-    var btns=pct.map(function(p){
+    var pcts=[25,50,75,100];
+    var btns=pcts.map(function(p){
       var amt=Math.round(tg*p/100);
-      var disabled=amt>budget||a.attemptsLeft<=0?'disabled':''
-      return '<button '+disabled+' onclick="makeSigningBid('+a.id+','+p+')" style="font-size:11px;padding:4px 6px;margin:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;cursor:pointer;">'+p+'% ('+ (amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K'))+')</button>';
+      var dis=amt>budget?'disabled':'';
+      var lbl=amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K');
+      return '<button '+dis+' onclick="makeSigningBid('+a.id+','+p+')" style="font-size:11px;padding:4px 6px;margin:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;cursor:pointer;">'+p+'% ('+lbl+')</button>';
     }).join('');
+    var tgLbl=tg>=1e6?(tg/1e6).toFixed(1)+'M':(Math.round(tg/1000)+'K');
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">'+
-      '<div style="display:flex;align-items:center;gap:8px">'+posBadge(a.pos)+'<div><div style="font-weight:600">'+a.name+'</div><div style="font-size:11px;color:#aaa">'+a.pos+' · OVR '+a.rating+' · '+a.age+'j · Tekengeld: '+(tg>=1e6?(tg/1e6).toFixed(1)+'M':(Math.round(tg/1000)+'K'))+'</div></div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+posBadge(a.pos)+'<div><div style="font-weight:600">'+a.name+'</div><div style="font-size:11px;color:#aaa">'+a.pos+' · OVR '+a.rating+' · '+a.age+'j · Tekengeld: '+tgLbl+'</div></div></div>'+
       '<div style="text-align:right"><div style="font-size:11px;color:#aaa;margin-bottom:4px">Pogingen: '+a.attemptsLeft+'/8</div>'+btns+'</div>'+
     '</div>';
   }).join('');
@@ -2304,8 +2306,8 @@ function makeSigningBid(agentId, pct){
     var newP={id:++_pid,name:a.name,pos:a.pos,rating:a.rating,age:a.age,fitness:85};
     myTeam.bench=myTeam.bench||[];
     myTeam.bench.push(newP);
-    // Remove from pool
-    a.attemptsLeft=0;
+        // Permanently splice from database
+    var _idx=G.freeAgentsDatabase.indexOf(a); if(_idx>-1) G.freeAgentsDatabase.splice(_idx,1);
     toast('✅ '+a.name+' getekend voor '+(amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K'))+'!');
     G.transfersDone=(G.transfersDone||0)+1;
     G.transfersThisSeason=(G.transfersThisSeason||0)+1;
