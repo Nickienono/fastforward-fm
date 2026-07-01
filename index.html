@@ -1806,14 +1806,19 @@ function sellPlayer(pid) {
     toast('✅ ' + p.name + ' verkocht (geen club kon betalen) voor €' + (p.value/1e6).toFixed(1) + 'M.');
   }
   arr.splice(idx, 1);
-  if (!fromBench && myTeam.bench.length > 0) {
-    const sub = myTeam.bench.shift();
-    myTeam.starters.push(sub);
-    toast(`${p.name} verkocht. ${sub.name} in de basis.`);
+  if (!fromBench) {
+    const subIdx = myTeam.bench.findIndex(b => b.pos === p.pos);
+    if (subIdx >= 0) {
+      const sub = myTeam.bench.splice(subIdx, 1)[0];
+      myTeam.starters.splice(idx, 0, sub);
+      toast(`${p.name} verkocht. ${sub.name} in de basis (${p.pos}).`);
+    } else {
+      toast(`${p.name} verkocht. Geen wisselaar voor positie ${p.pos}.`);
+    }
   } else {
     toast(`${p.name} verkocht voor ${fmtMoney(p.value)}.`);
   }
-  G.market.push({ ...p, club: 'Vrije agent', age: p.age || (Math.floor(Math.random()*24)+17) });
+    G.market.push({ ...p, club: 'Vrije agent', age: p.age || (Math.floor(Math.random()*24)+17) });
   renderAll();
   saveGame();
 }
