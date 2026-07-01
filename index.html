@@ -877,7 +877,7 @@ async function launchGame(hasSave) {
     try {
       const res = await fetch(`/api/load?username=${encodeURIComponent(CURRENT_USER.username)}&tag=${encodeURIComponent(CURRENT_USER.tag)}`);
       const { gameState } = await res.json();
-      if (gameState && gameState.myName) {
+      if (gameState && gameState.myName && (gameState.season||0) >= 1) {
         G = gameState;
         // Velden initialiseren die ontbreken in oude saves
         G.careerId                = G.careerId                || (Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -2613,6 +2613,7 @@ async function newSeason() {
   const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
     await pushLeaderboard();
   toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts.total + ' LB punten 🏆');
+  await saveGame();
 }
 
 // ══════════════════════════════════════════════════
