@@ -2274,11 +2274,13 @@ function renderFreeAgents(){
     var pcts=[25,50,75,100];
     var btns=pcts.map(function(p){
       var amt=Math.round(tg*p/100);
-      var dis=(amt>budget||(G.freeSigningsDone||0)>=5)?'disabled':'';      var lbl=amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K');
+      var dis=(amt>budget||(G.freeSigningsDone||0)>=5||a.attemptsLeft<=0)?'disabled':'';      var lbl=amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K');
       return '<button '+dis+' onclick="makeSigningBid('+a.id+','+p+')" style="font-size:11px;padding:4px 6px;margin:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;cursor:pointer;">'+p+'% ('+lbl+')</button>';
     }).join('');
+    var _bg=a.attemptsLeft<=0?'rgba(218,54,51,.15)':'rgba(255,255,255,.05)';
+    var _bd=a.attemptsLeft<=0?'rgba(218,54,51,.5)':'rgba(255,255,255,.1)';
     var tgLbl=tg>=1e6?(tg/1e6).toFixed(1)+'M':(Math.round(tg/1000)+'K');
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">'+
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:8px;background:'+_bg+';border-radius:8px;border:1px solid '+_bd+'">'+
       '<div style="display:flex;align-items:center;gap:8px">'+posBadge(a.pos)+'<div><div style="font-weight:600">'+a.name+' <span style="background:#0d6efd;color:#fff;border-radius:3px;padding:1px 5px;font-size:11px;font-weight:700;">'+a.rating+'</span></div><div style="font-size:11px;color:#aaa">'+a.pos+' · '+a.age+'j · Tekengeld: '+tgLbl+'</div></div></div>'+
       '<div style="text-align:right"><div style="font-size:11px;color:#aaa;margin-bottom:4px">Pogingen: '+a.attemptsLeft+'/8</div>'+btns+'</div>'+
     '</div>';
@@ -2294,7 +2296,6 @@ function makeSigningBid(agentId, pct){
   var amt=Math.round(a.tekengeld*pct/100);
   if(amt>(myTeam.budget||0)){toast('Niet genoeg budget!');return;}
   a.attemptsLeft--;
-    G.freeSigningsDone=(G.freeSigningsDone||0)+1;
   // Kans gebaseerd op percentage: 25%→20%, 50%→40%, 75%→65%, 100%→90%
   var kans={25:0.20,50:0.40,75:0.65,100:0.90}[pct]||0.5;
   if(Math.random()<kans){
@@ -2302,6 +2303,7 @@ function makeSigningBid(agentId, pct){
         var newP={id:++_pid,name:a.name,pos:a.pos,rating:a.rating,age:a.age,fitness:85,value:Math.max(50000,Math.round(141*Math.pow(a.rating-35,3)))};
     myTeam.bench=myTeam.bench||[];
     myTeam.bench.push(newP);
+    G.freeSigningsDone=(G.freeSigningsDone||0)+1;
         // Permanently splice from database
     var _idx=G.freeAgentsDatabase.indexOf(a); if(_idx>-1) G.freeAgentsDatabase.splice(_idx,1);
     toast('✅ '+a.name+' getekend voor '+(amt>=1e6?(amt/1e6).toFixed(1)+'M':(Math.round(amt/1000)+'K'))+'!');
