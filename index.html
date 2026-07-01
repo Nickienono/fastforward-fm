@@ -199,10 +199,10 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .pcard .pname   { font-size: 0.72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 76px; }
 .pcard .prating { font-size: 0.9rem; font-weight: 700; color: var(--gold); }
 .pcard .ppos    { font-size: 0.65rem; color: var(--dim); }
-.pcard.pos-att  { background: var(--pos-att); color: #fff; }
-.pcard.pos-mid  { background: var(--pos-mid); color: #000; }
-.pcard.pos-def  { background: var(--pos-def); color: #fff; }
-.pcard.pos-gk   { background: var(--pos-gk);  color: #fff; }
+.pcard.pos-att  { background: rgba(0,123,255,0.5); color: #fff; }
+.pcard.pos-mid  { background: rgba(255,193,7,0.5); color: #000; }
+.pcard.pos-def  { background: rgba(220,53,69,0.5); color: #fff; }
+.pcard.pos-gk   { background: rgba(40,167,69,0.5); color: #fff; }
 .pos-badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; font-size:0.6rem; font-weight:700; margin-right:6px; flex-shrink:0; }
 .pos-badge.pos-att { background:var(--pos-att); color:#fff; }
 .pos-badge.pos-mid { background:var(--pos-mid); color:#000; }
@@ -2699,7 +2699,7 @@ function renderPreMatch() {
     '<div class="pitch-row">' + row.map(p => {
       const idx = starters.indexOf(p);
       const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === idx;
-      return '<div class="pcard' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'pitch\',' + idx + ')">' +
+      return '<div class="pcard '+posClass(p.pos)+'' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'pitch\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
         '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
         '<div class="ppos">' + p.pos + '</div>' +
