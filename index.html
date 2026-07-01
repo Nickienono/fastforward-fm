@@ -2264,7 +2264,7 @@ function renderFreeAgents(){
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
   var myOvr=myTeam?(myTeam.starters||[]).concat(myTeam.bench||[]).reduce(function(s,p){return s+p.rating;},0)/Math.max(1,(myTeam.starters||[]).length+(myTeam.bench||[]).length):70;
   var budget=myTeam?(myTeam.budget||0):0;
-  var pool=G.freeAgentsDatabase.filter(function(a){return Math.abs(a.rating-myOvr)<=10;}).slice(0,15);
+  var _ovr=myOvr>5?myOvr:70;  var pool=G.freeAgentsDatabase.filter(function(a){return Math.abs(a.rating-_ovr)<=25;}).slice(0,15);  if(!pool.length)pool=G.freeAgentsDatabase.slice(0,15);
   var budgetDisp=document.getElementById('scout-budget-display');
   if(budgetDisp)budgetDisp.textContent='Budget: '+fmtMoney(budget);
   if(!pool.length){el.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Geen vrije spelers beschikbaar in jouw OVR-range ('+(myOvr|0)+' ±10).</p>';return;}
