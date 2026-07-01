@@ -2950,6 +2950,10 @@ function closePreMatch() {
 }
 
 function confirmAndPlay() {
+  if (G.matchLineup && G.matchLineup.starters.some(function(p){return p._empty;})) {
+    toast('❌ Vul eerst alle 11 basisposities in.');
+    return;
+  }
   document.getElementById('modal-prematch').classList.remove('open');
   playNextMatch();
 }
