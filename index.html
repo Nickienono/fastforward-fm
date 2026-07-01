@@ -792,7 +792,11 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       </div>
     </div>
   </details>
-    <div class="modal-footer">
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <h3 style="font-size:.95rem;margin-bottom:12px">🏆 Hall of Fame</h3>
+      <div id="global-hof-content"><p style="color:var(--dim);font-size:.85rem">Laden…</p></div>
+    </div>
+        <div class="modal-footer">
       <button class="btn-secondary" onclick="document.getElementById('modal-leaderboard').classList.remove('open')">✕ Sluiten</button>
     </div>
   </div>
@@ -3020,6 +3024,50 @@ function renderTopScorers() {
     setLoginBusy(false);
   }
 })();
+
+async function renderGlobalHoF() {
+  const el = document.getElementById('global-hof-content');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--dim);font-size:.85rem">Laden…</p>';
+  try {
+    const res  = await fetch('/api/hall-of-fame');
+    const data = await res.json();
+    const medals = ['🥇','🥈','🥉'];
+    let html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+      + '<span style="background:var(--blue);color:#fff;font-size:.75rem;padding:3px 10px;border-radius:20px;font-weight:700">Seizoen '
+      + (data.currentSeason || 1) + ' actief</span>'
+      + (data.seasonStarted ? '<span style="color:var(--dim);font-size:.75rem"> gestart '
+          + new Date(data.seasonStarted).toLocaleDateString('nl-NL') + '</span>' : '')
+      + '</div>';
+    if (!data.seasons || data.seasons.length === 0) {
+      html += '<p style="color:var(--dim);font-size:.85rem;margin:0">Nog geen afgesloten seizoenen — wees de eerste!</p>';
+    } else {
+      data.seasons.forEach(function(season) {
+        html += '<div style="margin-bottom:12px"><b style="font-size:.85rem">Seizoen ' + season.seasonNumber + '</b>';
+        if (season.closedAt) html += ' <span style="color:var(--dim);font-size:.75rem">(' + new Date(season.closedAt).toLocaleDateString('nl-NL') + ')</span>';
+        html += '<table class="ts-table" style="margin-top:6px"><thead><tr><th class="ts-rank">#</th><th class="ts-name">Speler</th><th class="ts-num">Pnt</th><th class="ts-num">Sz</th></tr></thead><tbody>';
+        (season.top3 || []).forEach(function(p, i) {
+          html += '<tr><td class="ts-rank" style="font-size:1rem">' + (medals[i] || (i+1)) + '</td>'
+            + '<td class="ts-name">' + (p.displayName || p.username || '–') + '</td>'
+            + '<td class="ts-num">' + (p.points || 0) + '</td>'
+            + '<td class="ts-num">' + (p.seasons || 0) + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      });
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--dim);font-size:.85rem">Kon Hall of Fame niet laden.</p>';
+  }
+}
+(function() {
+  var modal = document.getElementById('modal-leaderboard');
+  if (!modal) return;
+  new MutationObserver(function() {
+    if (modal.classList.contains('open')) renderGlobalHoF();
+  }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+})();
+
 </script>
 </body>
 </html>
