@@ -1380,7 +1380,7 @@ function setProgress(pct) {
 // ══════════════════════════════════════════════════
 
 function buildSquad(teamData) {
-  const perPos = { K: [], V: [], M: [], A: [] };
+  const perPos = { GK: [], V: [], M: [], A: [] };
   for (const p of teamData.allPlayers) {
     if (perPos[p.pos]) perPos[p.pos].push({ ...p, fitness: 100 });
   }
