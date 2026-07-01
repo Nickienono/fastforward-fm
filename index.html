@@ -1190,9 +1190,16 @@ function mvToRating(mv) {
   return Math.round(clamp((log - 5) / 3 * 49 + 50, 50, 99));
 }
 
-/** Rating → geschatte marktwaarde */
+/** Dynamic market value — base €800K at rating 66 age 27, exponential scale 1.135/pt, age modifier */
+function calculatePlayerValue(rating, age) {
+  const ageMod = age <= 23 ? 1.25 : age <= 26 ? 1.10 : age <= 29 ? 1.00 : age <= 32 ? 0.75 : 0.45;
+  const raw = 800000 * Math.pow(1.135, (rating || 66) - 66) * ageMod;
+  return Math.round(raw / 10000) * 10000;
+}
+
+/** Legacy wrapper — age-27 baseline for callers without age context */
 function calcValue(rating) {
-  return Math.round(Math.pow(Math.max(0, rating - 55), 2) * 14000 + 80000);
+  return calculatePlayerValue(rating, 27);
 }
 
 /** Position helpers */
@@ -1245,7 +1252,8 @@ function randomName() { return FN[ri(0,FN.length-1)] + ' ' + LN[ri(0,LN.length-1
 
 function makeFallbackPlayer(pos, tier) {
   const rating = clamp(tier + ri(-6, 6), 50, 99);
-  return { id: ++_pid, name: randomName(), pos, rating, fitness: 100, value: calcValue(rating) };
+  const age    = ri(18, 32);
+  return { id: ++_pid, name: randomName(), pos, rating, age, fitness: 100, value: calculatePlayerValue(rating, age) };
 }
 
 // ══════════════════════════════════════════════════
@@ -1270,7 +1278,7 @@ async function loadEredivisieData(afterLoad) {
       LOADED_TEAMS = EREDIVISIE_BUILTIN.teams.map(t => ({
         ...t,
         fullName: t.fullName || t.name,
-        allPlayers: (t.allPlayers || []).map(p => ({ ...p, fitness: 100 })),
+        allPlayers: (t.allPlayers || []).map(p => ({ ...p, fitness: 100, value: calculatePlayerValue(p.rating || 65, p.age || 27) })),
       }));
       LOADED_TEAMS.sort((a, b) => b.tier - a.tier);
       setProgress(100);
@@ -1607,7 +1615,7 @@ function applyGrowth(myTeam, goalsAgainst) {
     p.growthPoints=(p.growthPoints||0)+g;
     if (p.growthPoints>=1.0) {
       const cap=Math.min(99,(p.baseRating||p.rating)+10);
-      if (p.rating<cap) { p.rating++; p.value=calcValue(p.rating); p._justGrew=true; }
+      if (p.rating<cap) { p.rating++; p.value=calculatePlayerValue(p.rating, p.age||27); p._justGrew=true; }
       p.growthPoints-=1.0;
     }
   });
@@ -1739,8 +1747,8 @@ function generateMarket(){
   var posList=['GK','V','V','V','V','M','M','M','M','M','A','A','A','A','A'];
   var pool=posList.map(function(p){
     var r=ri(lo,hi);
-    return {id:++_pid,attemptsLeft:8,name:randomName(),pos:p,rating:r,
-            fitness:ri(80,100),value:calcValue(r),club:'Vrije agent',source:'free',age:Math.floor(Math.random()*24)+17};
+    return ((a)=>({id:++_pid,attemptsLeft:8,name:randomName(),pos:p,rating:r,
+            fitness:ri(80,100),value:calculatePlayerValue(r,a),club:'Vrije agent',source:'free',age:a}))(ri(17,40));
   });
   if(typeof G!=='undefined'&&G){G.scoutPool=pool;}
   return pool;
