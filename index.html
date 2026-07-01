@@ -2650,6 +2650,7 @@ async function newSeason() {
   document.getElementById('modal-season').classList.remove('open');
   G.transfersThisSeason = 0;
   G.freeSigningsDone = 0;
+  if(G.freeAgentsDatabase) G.freeAgentsDatabase.forEach(function(a){a.attemptsLeft=8;});
   G.scoutAttempts = {};
   G.scoutPool = [];
   G.scoutPoolRound = -1;  // reset bij nieuw seizoen
