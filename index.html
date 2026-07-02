@@ -1013,11 +1013,16 @@ async function launchGame(hasSave) {
         // Geef ID aan AI-spelers die er geen hebben (fix onderhandelen)
         var _mpid = _pid;
         G.teams.forEach(function(t){
+          t.form = t.form || [];
           [].concat(t.starters||[]).concat(t.bench||[]).forEach(function(p){
             if (!p.id) p.id = ++_mpid;
           });
         });
         _pid = _mpid;
+        if (!G.league) G.league = 'eredivisie';
+        G.otherRound = G.otherRound || 0;
+        if (!G.otherSchedule || !G.otherSchedule.length) { G.otherSchedule = buildSchedule((G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return t.name;})); }
+        if (!G.otherStandings || !G.otherStandings.length) { G.otherStandings = (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};}); }
         // Herstel freeAgentsDatabase als die ontbreekt (oud save)
         if (!G.freeAgentsDatabase || !G.freeAgentsDatabase.length) {
           G.freeAgentsDatabase = generateFreeAgents();
@@ -1100,6 +1105,7 @@ function showSaveScreen(fromInactivity) {
     logoFb.style.display = 'flex';
   }
   document.getElementById('save-club-name').textContent = G.myName || '–';
+  document.getElementById('save-club-league').textContent = G.league === 'kkd' ? 'Keuken Kampioen Divisie' : 'Eredivisie';
   document.getElementById('save-season').textContent = String(G.season || 1);
   var round = G.round || 0;
   var total = G.totalRounds || 34;
@@ -2132,7 +2138,11 @@ function updateTopBar() {
   const sorted = getSorted();
   document.getElementById('top-pos').textContent = sorted.findIndex(t => t.name === G.myName) + 1;
   document.getElementById('top-round').textContent = G.round;
-}
+
+  if (myTeam) {
+    document.getElementById('top-club').textContent = G.myName;
+    document.getElementById('top-budget').textContent = fmtMoney(myTeam.budget);
+  }}
 
 function getSorted() {
   return [...G.teams].sort((a,b) => {
