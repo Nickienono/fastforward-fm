@@ -1957,6 +1957,10 @@ function closeNegotiation() {
 }
 
 function makeOffer(factor,askingPrice,playerId,sourceTeam){
+  if(playerId===undefined)playerId=NEGOTIATE_PID;
+  if(sourceTeam===undefined)sourceTeam=NEGOTIATE_FROM_TEAM;
+  document.getElementById('modal-negotiate')?.classList.remove('open');
+  document.getElementById('modal-negotiate')?.classList.remove('open');
   if((G.transfersThisSeason||0)>=20){toast('❌ Maximum van 20 transfers per seizoen bereikt!');return;}
   var myTeam=G.teams.find(function(t){return t.name===G.myName;});
   if(!myTeam)return;
