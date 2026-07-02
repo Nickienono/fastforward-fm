@@ -1265,9 +1265,9 @@ function mvToRating(mv) {
 
 /** Dynamic market value — base €800K at rating 66 age 27, exponential scale 1.135/pt, age modifier */
 function calculatePlayerValue(rating, age) {
+  const base = Math.round(Math.pow(10, (rating - 50) / 49 * 3 + 5));
   const ageMod = age <= 23 ? 1.25 : age <= 26 ? 1.10 : age <= 29 ? 1.00 : age <= 32 ? 0.75 : 0.45;
-  const raw = 800000 * Math.pow(1.135, (rating || 66) - 66) * ageMod;
-  return Math.round(raw / 10000) * 10000;
+  return Math.round(base * ageMod);
 }
 
 /** Legacy wrapper — age-27 baseline for callers without age context */
