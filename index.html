@@ -49,6 +49,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .team-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); gap: 12px; max-width: 920px; width: 100%; }
 .team-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px 14px; cursor: pointer; transition: all .18s; text-align: center; }
 .team-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.league-tabs { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; max-width:920px; width:100%; }
+.league-btn { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:6px 18px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all .15s; }
+.league-btn.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:600; }
+.team-search { width:100%; max-width:400px; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:0.9rem; margin-bottom:12px; display:block; margin-left:auto; margin-right:auto; }
 .tc-logo { width: 52px; height: 52px; object-fit: contain; margin-bottom: 8px; }
 .tc-logo-fallback { font-size: 2.2rem; margin-bottom: 8px; }
 .tc-name { font-weight: 700; margin-bottom: 6px; font-size: 0.92rem; }
@@ -495,7 +499,12 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 <div id="screen-select" class="screen">
   <img src="/Fast%20Fordward%20FM%20-%20logo%20v1.png" alt="FastForward FM" style="max-width:220px;margin-bottom:8px;border-radius:10px;display:block;margin-left:auto;margin-right:auto">
   <p class="sub">Kies je club en begin je seizoen</p>
-  <div class="team-cards" id="team-cards"></div>
+  <div class="league-tabs">
+  <button id="btn-eredivisie" class="league-btn active" onclick="switchSelectLeague('eredivisie')">🏆 Eredivisie</button>
+  <button id="btn-kkd" class="league-btn" onclick="switchSelectLeague('kkd')">🥈 KKD</button>
+</div>
+<input id="team-search" class="team-search" type="text" placeholder="Zoek club..." oninput="buildTeamSelect()">
+<div class="team-cards" id="team-cards"></div>
   <p class="select-caption">Kies een club met een lagere begin-rating voor een hogere multiplier. Deze blijft de héLE carrière actief, ook als je team beter wordt!</p>
 </div>
 
@@ -1460,8 +1469,19 @@ function buildSquad(teamData) {
 //  TEAM SELECT
 // ══════════════════════════════════════════════════
 
+function switchSelectLeague(league) {
+  selectLeague(league);
+  document.querySelectorAll('.league-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-' + league);
+  if (btn) btn.classList.add('active');
+  const s = document.getElementById('team-search');
+  if (s) s.value = '';
+  buildTeamSelect();
+}
 function buildTeamSelect() {
-  document.getElementById('team-cards').innerHTML = LOADED_TEAMS.map((t, i) => {
+  const _q=(document.getElementById('team-search')?.value||'').toLowerCase();
+  const _list=LOADED_TEAMS.map((t,i)=>({t,i})).filter(({t})=>!_q||t.name.toLowerCase().includes(_q));
+  document.getElementById('team-cards').innerHTML=_list.map(({t,i})=>{
     const logoHtml = t.imageUrl
       ? `<img src="${t.imageUrl}" alt="${t.name}" class="tc-logo" onerror="this.outerHTML='<div class=tc-logo-fallback>⚽</div>'">`
       : `<div class="tc-logo-fallback">⚽</div>`;
