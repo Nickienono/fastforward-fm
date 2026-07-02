@@ -2228,9 +2228,9 @@ function renderBaseSubs() {
       const inP  = myTeam.bench[s.benchIdx];
       if (!outP || !inP) return '';
       return `<div class="sub-row">
-        <span class="sub-badge" style="border:1px solid var(--red)">${outP.name.split(' ').pop()} (${outP.pos})</span>
+        <span class="sub-badge" style="border:1px solid var(--red)">${outP.name.split(' ').slice(1).join(' ')} (${outP.pos})</span>
         <span class="sub-arrow">&#8594;</span>
-        <span class="sub-badge" style="border:1px solid var(--green)">${inP.name.split(' ').pop()} (${inP.pos})</span>
+        <span class="sub-badge" style="border:1px solid var(--green)">${inP.name.split(' ').slice(1).join(' ')} (${inP.pos})</span>
         <button class="btn-sub-rm" onclick="removeBaseSub(${i})" title="Verwijder">&#10005;</button>
       </div>`;
     }).join('');
@@ -2294,7 +2294,7 @@ function renderOpsteliling() {
       const sel = selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===p._si;
       return `<div class="pcard ${posClass(p.pos)}${sel?' selected':''}" onclick="selectPlayer('pitch',${p._si})">
         <div class="prating">${p.rating}</div>
-        <div class="pname">${p.name.split(' ').pop()}</div>
+        <div class="pname">${p.name.split(' ').slice(1).join(' ')}</div>
         <div class="ppos">${p.pos}${p.age?' · '+p.age:''}</div>
         <div class="fitness-bar"><div class="fitness-fill ${fitColor(p.fitness)}" style="width:${p.fitness}%"></div></div>
       </div>`;
@@ -2308,7 +2308,7 @@ function renderOpsteliling() {
       const sel = selectedPlayer && selectedPlayer.from==='bench' && selectedPlayer.idx===idx;
       return `<div class="pcard ${posClass(p.pos)} bench-card${sel?' selected':''}" onclick="selectPlayer('bench',${idx})">
         <div class="prating">${p.rating}</div>
-        <div class="pname">${p.name.split(' ').pop()}</div>
+        <div class="pname">${p.name.split(' ').slice(1).join(' ')}</div>
         <div class="ppos">${p.pos}</div>
         <div class="fitness-bar"><div class="fitness-fill ${fitColor(p.fitness)}" style="width:${p.fitness}%"></div></div>
       </div>`;
@@ -2896,7 +2896,7 @@ function renderPreMatch() {
       const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === idx;
       return '<div class="pcard '+posClass(p.pos)+'' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'pitch\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
-        '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
+        '<div class="pname">' + p.name.split(' ').slice(1).join(' ') + '</div>' +
         '<div class="ppos">' + p.pos + '</div>' +
         '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
         '</div>';
@@ -2908,7 +2908,7 @@ function renderPreMatch() {
     const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
     return '<div class="pcard '+posClass(p.pos)+' bench-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
       '<div class="prating">' + p.rating + '</div>' +
-      '<div class="pname">' + p.name.split(' ').pop() + '</div>' +
+      '<div class="pname">' + p.name.split(' ').slice(1).join(' ') + '</div>' +
       '<div class="ppos">' + p.pos + '</div>' +
       '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
       '</div>';
@@ -3007,9 +3007,9 @@ function renderPreMatchSubs() {
       const inP  = ml.bench[s.benchIdx];
       if (!outP || !inP) return '';
       return '<div class="sub-row">' +
-        '<span class="sub-badge" style="border:1px solid var(--red)">' + outP.name.split(' ').pop() + ' (' + outP.pos + ')</span>' +
+        '<span class="sub-badge" style="border:1px solid var(--red)">' + outP.name.split(' ').slice(1).join(' ') + ' (' + outP.pos + ')</span>' +
         '<span class="sub-arrow">→</span>' +
-        '<span class="sub-badge" style="border:1px solid var(--green)">' + inP.name.split(' ').pop() + ' (' + inP.pos + ')</span>' +
+        '<span class="sub-badge" style="border:1px solid var(--green)">' + inP.name.split(' ').slice(1).join(' ') + ' (' + inP.pos + ')</span>' +
         '<button class="btn-sub-rm" onclick="removePreMatchSub(' + i + ')" title="Verwijder">✕</button>' +
         '</div>';
     }).join('');
