@@ -1969,7 +1969,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
     aiTeam=G.teams.find(function(t){return t.name===sourceTeam;});
     if(aiTeam&&aiTeam.players)player=aiTeam.players.find(function(p){return p.id===playerId;});
   } else {
-    var pool=G.scoutPool||G.market||[];
+    var pool=(G.scoutPool&&G.scoutPool.length)?G.scoutPool:G.market||[];
     player=pool.find(function(p){return p.id===playerId;});
   }
   if(!player){toast('❌ Speler niet beschikbaar.');return;}
