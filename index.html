@@ -2421,6 +2421,7 @@ function showTrxTab(tab){
     if(cp)cp.style.display='block';
     var b=document.getElementById('btn-trx-club');
     if(b)b.classList.add('active');
+    populateClubFilter();
     renderClubSearch();
   }else if(tab==='sell'){
     if(sel)sel.style.display='block';
@@ -2576,6 +2577,7 @@ function renderClubSearch(){
   var otherBuiltin2=G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN;
   var otherLeagueTeams=((otherBuiltin2&&otherBuiltin2.teams)||[]).map(function(t){return Object.assign({},t,{players:t.allPlayers||[]});});
   var allSearchTeams=aiTeams.concat(otherLeagueTeams);
+  if(!clubVal&&!naamVal){el.innerHTML='<p style="color:var(--dim);text-align:center;padding:20px">Zoek op naam of kies een club</p>';return;}
   var results=[];
   allSearchTeams.forEach(function(team){
     if(clubVal&&team.name!==clubVal)return;
