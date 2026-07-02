@@ -2705,7 +2705,7 @@ async function newSeason() {
           p.rating = Math.max(40, Math.min(99, p.rating + delta));
         }
         if (p.rating !== undefined && p.age) {
-          p.value = calcPlayerValue(p.rating, p.age);
+          p.value = calculatePlayerValue(p.rating, p.age);
         }
         return true;
       });
