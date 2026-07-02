@@ -944,16 +944,11 @@ async function continueAfterNew() {
 }
 
 function showCountrySelect(){
-  document.querySelectorAll('.screen').forEach(function(s){s.style.display='none';});
-  var el=document.getElementById('screen-country');
-  if(el)el.style.display='flex';
+  showScreen('country');
 }
 function showLeagueSelect(c){
-  document.querySelectorAll('.screen').forEach(function(s){s.style.display='none';});
-  var el=document.getElementById('screen-league');
-  if(el)el.style.display='flex';
-}
-function selectLeague(league){
+  showScreen('league');
+}function selectLeague(league){
   if(!window.G)window.G={};
   G.league=league;
   if(league==='kkd'){
