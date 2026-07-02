@@ -1996,6 +1996,8 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
     if(sourceTeam){
       if(!aiTeam.players)aiTeam.players=[];
       aiTeam.players=aiTeam.players.filter(function(p){return p.id!==playerId;});
+      if(aiTeam.starters)aiTeam.starters=aiTeam.starters.filter(function(p){return p.id!==playerId;});
+      if(aiTeam.bench)aiTeam.bench=aiTeam.bench.filter(function(p){return p.id!==playerId;});
       aiTeam.budget=(aiTeam.budget||0)+offerPrice;
     } else {
       if(G.scoutPool)G.scoutPool=G.scoutPool.filter(function(p){return p.id!==playerId;});
