@@ -515,6 +515,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       <img id="top-logo" src="/Fast%20Fordward%20FM%20-%20logo%20v1.png" alt="FFFM" style="height:28px;border-radius:4px" onerror="this.style.display='none'">
       <span id="top-club">–</span>
     </div>
+    <div class="stat">💰 <b id="top-budget">–</b></div>
     <div class="stat">👤 <b id="top-username">Gast</b></div>
     <div class="stat">📊 <b id="top-pos">–</b>e</div>
     <div class="round">Ronde <b id="top-round">0</b>/<span id="top-round-total">34</span></div>
@@ -2141,7 +2142,7 @@ function updateTopBar() {
 
   if (myTeam) {
     document.getElementById('top-club').textContent = G.myName;
-    document.getElementById('top-budget').textContent = fmtMoney(myTeam.budget);
+    var _be = document.getElementById('top-budget'); if (_be) _be.textContent = fmtMoney(myTeam ? myTeam.budget : 0);
   }}
 
 function getSorted() {
