@@ -536,13 +536,20 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <div>
           <div class="next-match-card" id="next-match-card"></div>
           <div class="card">
-            <h3>📋 Ranglijst Eredivisie</h3>
+            <h3 id="standings-title">📋 Ranglijst</h3>
             <table>
               <thead><tr>
                 <th>#</th><th>Club</th><th>G</th><th>W</th><th>G</th><th>V</th><th>GV</th><th>Pnt</th><th>Vorm</th>
               </tr></thead>
               <tbody id="standings-body"></tbody>
             </table>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3 id="standings-other-title">📋 Ranglijst</h3>
+            <div style="overflow-x:auto"><table>
+              <thead><tr><th>#</th><th>Club</th><th>Rtg</th></tr></thead>
+              <tbody id="standings-body-other"></tbody>
+            </table></div>
           </div>
         </div>
         <div>
@@ -2042,7 +2049,8 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
   var player=null,aiTeam=null;
   if(sourceTeam){
     aiTeam=G.teams.find(function(t){return t.name===sourceTeam;});
-    if(aiTeam&&aiTeam.players)player=aiTeam.players.find(function(p){return p.id===playerId;});
+    if(!aiTeam){var otB=G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN;aiTeam=((otB&&otB.teams)||[]).find(function(t){return t.name===sourceTeam;});}
+    if(aiTeam)player=(aiTeam.players||aiTeam.allPlayers||[]).find(function(p){return p.id===playerId;});
   } else {
     var pool=(G.scoutPool&&G.scoutPool.length)?G.scoutPool:G.market||[];
     player=pool.find(function(p){return p.id===playerId;});
@@ -2071,6 +2079,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
     if(sourceTeam){
       if(!aiTeam.players)aiTeam.players=[];
       aiTeam.players=aiTeam.players.filter(function(p){return p.id!==playerId;});
+      if(aiTeam.allPlayers)aiTeam.allPlayers=aiTeam.allPlayers.filter(function(p){return p.id!==playerId;});
       if(aiTeam.starters)aiTeam.starters=aiTeam.starters.filter(function(p){return p.id!==playerId;});
       if(aiTeam.bench)aiTeam.bench=aiTeam.bench.filter(function(p){return p.id!==playerId;});
       aiTeam.budget=(aiTeam.budget||0)+offerPrice;
@@ -2169,28 +2178,35 @@ function renderNextMatch() {
 }
 
 function renderStandings() {
-  const sorted = getSorted();
-  const n = sorted.length;
-  document.getElementById('standings-body').innerHTML = sorted.map((t, i) => {
-    const pos    = i + 1;
-    const rankCls = pos===1 ? 'champion' : pos<=4 ? 'europe' : pos>=n-2 ? 'relegation' : '';
-    const gd     = t.gf - t.ga;
-    const formH  = (t.form||[]).map(f => `<div class="dot ${f}"></div>`).join('');
-    const logoH  = t.imageUrl
-      ? `<img src="${t.imageUrl}" alt="" style="width:18px;height:18px;object-fit:contain" onerror="this.style.display='none'">`
-      : '';
-    return `<tr class="${t.name===G.myName?'me':''}">
-      <td class="rank ${rankCls}">${pos}</td>
-      <td><div class="club-cell">${logoH}<span>${t.name}</span></div></td>
-      <td>${t.wins+t.draws+t.losses}</td>
-      <td>${t.wins}</td><td>${t.draws}</td><td>${t.losses}</td>
-      <td>${gd>=0?'+':''}${gd}</td>
-      <td><b>${t.points}</b></td>
-      <td><div class="form-dots">${formH}</div></td>
-    </tr>`;
+  var sorted = getSorted();
+  var n = sorted.length;
+  var stTitle = document.getElementById('standings-title');
+  if(stTitle) stTitle.textContent = '📋 Ranglijst ' + (G&&G.league==='kkd'?'KKD':'Eredivisie');
+  document.getElementById('standings-body').innerHTML = sorted.map(function(t, i) {
+    var pos = i + 1;
+    var rankCls = pos===1 ? 'champion' : pos<=4 ? 'europe' : pos>=n-2 ? 'relegation' : '';
+    var isMine = t.name === G.myName;
+    var form = (t.form||[]).slice(-5).map(function(r){ return '<span class="dot '+r+'">'+( r==='W'?'W':r==='G'?'G':'V')+'</span>'; }).join('');
+    return '<tr class="'+(isMine?'me':'')+'">'+
+      '<td class="rank '+rankCls+'">'+pos+'</td>'+
+      '<td><div class="club-cell"><span>'+t.name+'</span></div></td>'+
+      '<td>'+(t.gp||0)+'</td><td>'+(t.w||0)+'</td><td>'+(t.d||0)+'</td><td>'+(t.l||0)+'</td>'+
+      '<td>'+(((t.gf||0)-(t.ga||0))>=0?'+':'')+((t.gf||0)-(t.ga||0))+'</td>'+
+      '<td><b>'+(t.points||0)+'</b></td>'+
+      '<td><div class="form-dots">'+form+'</div></td></tr>';
   }).join('');
+  var otherBuiltin = G&&G.league==='kkd' ? EREDIVISIE_BUILTIN : KKD_BUILTIN;
+  var otherTitle = document.getElementById('standings-other-title');
+  var otherBody = document.getElementById('standings-body-other');
+  if(otherTitle) otherTitle.textContent = '📋 Ranglijst ' + (G&&G.league==='kkd'?'Eredivisie':'KKD');
+  if(otherBody && otherBuiltin && otherBuiltin.teams) {
+    var ot = [...otherBuiltin.teams].sort(function(a,b){ return (b.tier||b.rating||70)-(a.tier||a.rating||70); });
+    otherBody.innerHTML = ot.map(function(t,i){
+      var p2=i+1, rc=p2===1?'champion':p2<=4?'europe':p2>=ot.length-2?'relegation':'';
+      return '<tr><td class="rank '+rc+'">'+p2+'</td><td><div class="club-cell"><span>'+t.name+'</span></div></td><td>'+(t.tier||t.rating||'')+'</td></tr>';
+    }).join('');
+  }
 }
-
 function renderSeasonStats() {
   const my  = G.teams.find(t => t.name === G.myName);
   const sorted = getSorted();
@@ -2500,7 +2516,13 @@ function populateClubFilter(){
   var sel=document.getElementById('filter-club');
   if(!sel||!G||!G.teams)return;
   var aiTeams=G.teams.filter(function(t){return t.name!==G.myName;});
-  sel.innerHTML='<option value="">Alle clubs</option>'+aiTeams.map(function(t){return '<option value="'+t.name+'">'+t.name+'</option>';}).join('');
+  var otherBuiltin=G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN;
+  var otherTeams=(otherBuiltin&&otherBuiltin.teams)||[];
+  sel.innerHTML='<option value="">Alle clubs</option>'
+    +'<optgroup label="'+(G.league==='kkd'?'KKD':'Eredivisie')+'">'
+    +aiTeams.map(function(t){return '<option value="'+t.name+'">'+t.name+'</option>';}).join('')+('</optgroup>')
+    +'<optgroup label="'+(G.league==='kkd'?'Eredivisie':'KKD')+'">'
+    +otherTeams.map(function(t){return '<option value="'+t.name+'">'+t.name+'</option>';}).join('')+('</optgroup>');
 }
 function renderClubSearch(){
   var naam=document.getElementById('filter-naam');
@@ -2518,8 +2540,11 @@ function renderClubSearch(){
   var budget=myTeam?(myTeam.budget||0):0;
   var cap=G.transfersThisSeason||0;
   var aiTeams=G.teams.filter(function(t){return t.name!==G.myName;});
+  var otherBuiltin2=G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN;
+  var otherLeagueTeams=((otherBuiltin2&&otherBuiltin2.teams)||[]).map(function(t){return Object.assign({},t,{players:t.allPlayers||[]});});
+  var allSearchTeams=aiTeams.concat(otherLeagueTeams);
   var results=[];
-  aiTeams.forEach(function(team){
+  allSearchTeams.forEach(function(team){
     if(clubVal&&team.name!==clubVal)return;
     (team.players||[]).forEach(function(p){
       if(posVal&&p.pos!==posVal)return;
