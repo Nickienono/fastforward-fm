@@ -1299,7 +1299,7 @@ const LN = ['de Vries','Jansen','Bakker','Visser','Smit','Meijer','de Boer','Mul
 function randomName() { return FN[ri(0,FN.length-1)] + ' ' + LN[ri(0,LN.length-1)]; }
 
 function makeFallbackPlayer(pos, tier) {
-  const rating = clamp(tier + ri(-6, 6), 50, 99);
+  const rating = clamp((tier||65) + ri(-6, 6), 50, 99);
   const age    = ri(18, 32);
   return { id: ++_pid, name: randomName(), pos, rating, age, fitness: 100, value: calculatePlayerValue(rating, age) };
 }
