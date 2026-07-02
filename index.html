@@ -547,7 +547,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
           <div class="card" style="margin-top:12px">
             <h3 id="standings-other-title">📋 Ranglijst</h3>
             <div style="overflow-x:auto"><table>
-              <thead><tr><th>#</th><th>Club</th><th>Rtg</th></tr></thead>
+              <thead><tr><th>#</th><th>Club</th><th>Gsp</th><th>Pts</th></tr></thead>
               <tbody id="standings-body-other"></tbody>
             </table></div>
           </div>
@@ -1553,6 +1553,9 @@ function startGame(teamIdx) {
   scoutPoolRound:  -1,
   freeAgentsDatabase: generateFreeAgents(),
   freeSigningsDone: 0,
+  otherSchedule:    buildSchedule((G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return t.name;})),
+  otherRound:       0,
+  otherStandings:   (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};}),
   };
 
   // Topbar
@@ -1784,6 +1787,23 @@ function playNextMatch() {
       myTeam.budget+=outcome==='win'?200000:outcome==='draw'?80000:0;
     }
   });
+
+  if (G.otherSchedule && G.otherRound < G.otherSchedule.length) {
+    G.otherRound++;
+    var _orms = G.otherSchedule[G.otherRound - 1];
+    _orms.forEach(function(m) {
+      var hT = G.otherStandings.find(function(t){return t.name===m.home;});
+      var aT = G.otherStandings.find(function(t){return t.name===m.away;});
+      if (!hT || !aT) return;
+      var hRtg = hT.rating||70, aRtg = aT.rating||70;
+      var hG = Math.round(Math.max(0, Math.random()*3 + (hRtg-aRtg)*0.02));
+      var aG = Math.round(Math.max(0, Math.random()*3 + (aRtg-hRtg)*0.02));
+      hT.gf+=hG; hT.ga+=aG; aT.gf+=aG; aT.ga+=hG;
+      if(hG>aG){hT.wins++;hT.points+=3;aT.losses++;}
+      else if(hG===aG){hT.draws++;hT.points++;aT.draws++;aT.points++;}
+      else{aT.wins++;aT.points+=3;hT.losses++;}
+    });
+  }
 
   // Herstel basisopstelling maar behoud fitness/stats van gespeelde spelers
   if (myTeam._baseStarters) {
@@ -2197,15 +2217,15 @@ function renderStandings() {
       '<td><b>'+(t.points||0)+'</b></td>'+
       '<td><div class="form-dots">'+form+'</div></td></tr>';
   }).join('');
-  var otherBuiltin = G&&G.league==='kkd' ? EREDIVISIE_BUILTIN : KKD_BUILTIN;
   var otherTitle = document.getElementById('standings-other-title');
   var otherBody = document.getElementById('standings-body-other');
   if(otherTitle) otherTitle.textContent = '📋 Ranglijst ' + (G&&G.league==='kkd'?'Eredivisie':'KKD');
-  if(otherBody && otherBuiltin && otherBuiltin.teams) {
-    var ot = [...otherBuiltin.teams].sort(function(a,b){ return (b.tier||b.rating||70)-(a.tier||a.rating||70); });
+  if(otherBody && G.otherStandings && G.otherStandings.length) {
+    var ot = G.otherStandings.slice().sort(function(a,b){ return (b.points-a.points)||((b.gf-b.ga)-(a.gf-a.ga)); });
+    var otn = ot.length;
     otherBody.innerHTML = ot.map(function(t,i){
-      var p2=i+1, rc=p2===1?'champion':p2<=4?'europe':p2>=ot.length-2?'relegation':'';
-      return '<tr><td class="rank '+rc+'">'+p2+'</td><td><div class="club-cell"><span>'+t.name+'</span></div></td><td>'+(t.tier||t.rating||'')+'</td></tr>';
+      var p2=i+1, rc=p2===1?'champion':p2<=4?'europe':p2>=otn-2?'relegation':'';
+      return '<tr><td class="rank '+rc+'">'+p2+'</td><td><div class="club-cell"><span>'+t.name+'</span></div></td><td>'+(t.wins+t.draws+t.losses)+'</td><td><b>'+t.points+'</b></td></tr>';
     }).join('');
   }
 }
@@ -2779,6 +2799,9 @@ async function newSeason() {
   G.season++;
   G.round   = 0;
   G.results = [];
+  G.otherRound = 0;
+  G.otherSchedule = buildSchedule((G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return t.name;}));
+  G.otherStandings = (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
   G.plannedSubs = null;
   G.matchLineup = null;
   G.topScorers  = {};
