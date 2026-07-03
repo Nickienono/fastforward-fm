@@ -52,6 +52,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .league-tabs { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; max-width:920px; width:100%; }
 .league-btn { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:6px 18px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all .15s; }
 .league-btn.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:600; }
+.flag-btn { background:none; border:none; cursor:pointer; padding:12px; }
+.flag-btn img { width:200px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.45); display:block; transition:transform .2s; }
+.flag-btn:hover img { transform:scale(1.05); }
+.comp-grid { display:flex; gap:40px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:8px; }
+.comp-btn { background:none; border:none; cursor:pointer; padding:12px; }
+.comp-btn img { width:140px; height:140px; object-fit:contain; display:block; transition:transform .2s; }
+.comp-btn:hover img { transform:scale(1.08); }
 .team-search { width:100%; max-width:400px; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:0.9rem; margin-bottom:12px; display:block; margin-left:auto; margin-right:auto; }
 .tc-logo { width: 52px; height: 52px; object-fit: contain; margin-bottom: 8px; }
 .tc-logo-fallback { font-size: 2.2rem; margin-bottom: 8px; }
@@ -498,14 +505,27 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 <!-- ══ TEAM SELECT ══ -->
 <div id="screen-select" class="screen">
   <img src="/Fast%20Fordward%20FM%20-%20logo%20v1.png" alt="FastForward FM" style="max-width:220px;margin-bottom:8px;border-radius:10px;display:block;margin-left:auto;margin-right:auto">
-  <p class="sub">Kies je club en begin je seizoen</p>
-  <div class="league-tabs">
-  <button id="btn-eredivisie" class="league-btn active" onclick="switchSelectLeague('eredivisie')"><img src="https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/eredivisie-logo.png" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> Eredivisie</button>
-  <button id="btn-kkd" class="league-btn" onclick="switchSelectLeague('kkd')"><img src="https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> KKD</button>
+  <p class="sub" id="select-sub">Kies je land</p>
+<div id="step-land">
+  <button class="flag-btn" onclick="selectLand('nl')">
+    <img src="https://flagcdn.com/w320/nl.png" alt="">
+  </button>
 </div>
-<input id="team-search" class="team-search" type="text" placeholder="Zoek club..." oninput="buildTeamSelect()">
-<div class="team-cards" id="team-cards"></div>
-  <p class="select-caption">Kies een club met een lagere begin-rating voor een hogere multiplier. Deze blijft de héLE carrière actief, ook als je team beter wordt!</p>
+<div id="step-competitie" style="display:none">
+  <div class="comp-grid">
+    <button class="comp-btn" onclick="switchSelectLeague('eredivisie')">
+      <img src="https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/eredivisie-logo.png" alt="">
+    </button>
+    <button class="comp-btn" onclick="switchSelectLeague('kkd')">
+      <img src="https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png" alt="">
+    </button>
+  </div>
+</div>
+<div id="step-team" style="display:none">
+  <input id="team-search" class="team-search" type="text" placeholder="Zoek club..." oninput="buildTeamSelect()">
+  <div class="team-cards" id="team-cards"></div>
+  <p class="select-caption">Kies je club om te beginnen!</p>
+</div>
 </div>
 
 <!-- ══ MAIN GAME ══ -->
@@ -1485,13 +1505,16 @@ function buildSquad(teamData) {
 //  TEAM SELECT
 // ══════════════════════════════════════════════════
 
+function selectLand(code) {
+  document.getElementById('step-land').style.display = 'none';
+  document.getElementById('step-competitie').style.display = '';
+  document.getElementById('select-sub').textContent = 'Kies je competitie';
+}
 function switchSelectLeague(league) {
   selectLeague(league);
-  document.querySelectorAll('.league-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('btn-' + league);
-  if (btn) btn.classList.add('active');
-  const s = document.getElementById('team-search');
-  if (s) s.value = '';
+  document.getElementById('step-competitie').style.display = 'none';
+  document.getElementById('step-team').style.display = '';
+  document.getElementById('select-sub').textContent = 'Kies je club';
   buildTeamSelect();
 }
 function buildTeamSelect() {
