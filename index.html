@@ -982,7 +982,13 @@ async function continueAfterNew() {
 }
 
 function showCountrySelect(){
-  showScreen('country');
+  var sl=document.getElementById('step-land');
+  var sc=document.getElementById('step-competitie');
+  var st=document.getElementById('step-team');
+  if(sl) sl.style.display='';
+  if(sc) sc.style.display='none';
+  if(st) st.style.display='none';
+  showScreen('select');
 }
 function showLeagueSelect(c){
   showScreen('league');
@@ -3268,7 +3274,7 @@ async function renderGlobalHoF() {
 })();
 
 </script>
-<div id="screen-country" class="screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)"><div style="max-width:480px;width:100%;padding:40px 20px;text-align:center"><h1 style="color:var(--accent);margin-bottom:32px">&#127757; Kies je land</h1><div style="display:flex;flex-direction:column;gap:12px"><button onclick="showLeagueSelect('netherlands')" style="padding:16px 24px;font-size:1.1em;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer">&#127475;&#127473; Nederland</button></div></div></div><div id="screen-league" class="screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)"><div style="max-width:480px;width:100%;padding:40px 20px;text-align:center"><h1 style="color:var(--accent);margin-bottom:32px">&#127942; Kies je competitie</h1><div style="display:flex;flex-direction:column;gap:12px"><button onclick="selectLeague('eredivisie')" style="padding:16px 24px;font-size:1.1em;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer">&#9917; Eredivisie</button><button onclick="selectLeague('kkd')" style="padding:16px 24px;font-size:1.1em;border-radius:12px;border:none;background:var(--card);color:var(--fg);cursor:pointer;border:2px solid var(--accent)">&#127941; Keuken Kampioen Divisie</button></div><button onclick="showCountrySelect()" style="margin-top:20px;padding:8px 16px;border-radius:8px;border:none;background:transparent;color:var(--fg);cursor:pointer;opacity:0.7">&#8592; Terug</button></div></div>
+
 </body>
 <!-- build -->
 </html>
