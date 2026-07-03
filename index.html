@@ -2214,7 +2214,7 @@ function renderStandings() {
   var sorted = getSorted();
   var n = sorted.length;
   var stTitle = document.getElementById('standings-title');
-  if(stTitle) stTitle.textContent = '📋 Ranglijst ' + (G&&G.league==='kkd'?'KKD':'Eredivisie');
+  if(stTitle){var lLogo=G&&G.league==='kkd'?'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png':'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/eredivisie-logo.png';stTitle.innerHTML='<img src="'+lLogo+'" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> Ranglijst '+(G&&G.league==='kkd'?'KKD':'Eredivisie');}
   document.getElementById('standings-body').innerHTML = sorted.map(function(t, i) {
     var pos = i + 1;
     var rankCls = pos===1 ? 'champion' : pos<=4 ? 'europe' : pos>=n-2 ? 'relegation' : '';
@@ -2222,7 +2222,7 @@ function renderStandings() {
     var form = (t.form||[]).slice(-5).map(function(r){ return '<span class="dot '+r+'">'+( r==='W'?'W':r==='G'?'G':'V')+'</span>'; }).join('');
     return '<tr class="'+(isMine?'me':'')+'">'+
       '<td class="rank '+rankCls+'">'+pos+'</td>'+
-      '<td><div class="club-cell"><span>'+t.name+'</span></div></td>'+
+      '<td><div class="club-cell">'+(t.imageUrl?'<img src="'+t.imageUrl+'" style="width:18px;height:18px;object-fit:contain;margin-right:4px;">':'')+'<span>'+t.name+'</span></div></td>'+
       '<td>'+(t.gp||0)+'</td><td>'+(t.w||0)+'</td><td>'+(t.d||0)+'</td><td>'+(t.l||0)+'</td>'+
       '<td>'+(((t.gf||0)-(t.ga||0))>=0?'+':'')+((t.gf||0)-(t.ga||0))+'</td>'+
       '<td><b>'+(t.points||0)+'</b></td>'+
