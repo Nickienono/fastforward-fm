@@ -52,6 +52,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .league-tabs { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; max-width:920px; width:100%; }
 .league-btn { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:6px 18px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all .15s; }
 .league-btn.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:600; }
+.lobby-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;justify-content:center;}
+.lobby-tab{background:var(--panel);border:1px solid var(--border);color:var(--dim);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.85rem;transition:all .15s;}
+.lobby-tab.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600;}
+.lobby-panel{width:100%;max-width:440px;text-align:left;}
+.lobby-update-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);}
+.update-badge{background:var(--gold);color:#000;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;margin-top:2px;}
+.lobby-update-item p{margin:2px 0 0;color:var(--dim);font-size:.85rem;}
+.rules-list{padding-left:20px;line-height:2;color:var(--dim);font-size:.9rem;}
+
 .flag-btn { background:none; border:none; cursor:pointer; padding:12px; }
 .flag-btn img { width:200px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.45); display:block; transition:transform .2s; }
 .flag-btn:hover img { transform:scale(1.05); }
@@ -503,6 +512,33 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 </div>
 
 <!-- ══ TEAM SELECT ══ -->
+<div id="screen-lobby" class="screen" style="display:none">
+  <h2 style="margin-bottom:16px;">⚽ FastForward FM</h2>
+  <div class="lobby-tabs">
+    <button class="lobby-tab active" onclick="switchLobbyTab('updates',this)">🆕 Updates</button>
+    <button class="lobby-tab" onclick="switchLobbyTab('regels',this)">📋 Spelregels</button>
+    <button class="lobby-tab" onclick="switchLobbyTab('leaderboard',this)">🏆 Leaderboard</button>
+  </div>
+  <div id="lobby-updates" class="lobby-panel">
+    <div class="lobby-update-item"><span class="update-badge">v1.3</span><div><b>Logo's toegevoegd</b><p>Competitie- en teamlogo's zichtbaar in ranglijst en teamkeuze.</p></div></div>
+    <div class="lobby-update-item"><span class="update-badge">v1.2</span><div><b>Nieuwe flow</b><p>Vlag → competitie → club selectie.</p></div></div>
+    <div class="lobby-update-item"><span class="update-badge">v1.1</span><div><b>KKD bugfixes</b><p>Promotie en prijzengeld gecorrigeerd.</p></div></div>
+  </div>
+  <div id="lobby-regels" class="lobby-panel" style="display:none">
+    <ul class="rules-list">
+      <li>Kies een club en speel maximaal 10 seizoenen</li>
+      <li>Verdien punten op basis van eindpositie × clubmultiplier</li>
+      <li>Moeilijkere clubs geven een hogere score-multiplier</li>
+      <li>KKD top 2 promoveert naar de Eredivisie</li>
+      <li>Eredivisie laatste 2 degraderen naar de KKD</li>
+      <li>Na 10 seizoenen wordt je score opgeslagen</li>
+    </ul>
+  </div>
+  <div id="lobby-leaderboard" class="lobby-panel" style="display:none">
+    <div id="lobby-lb-content" style="padding:12px 0;color:var(--dim);">Laden...</div>
+  </div>
+  <button style="margin-top:24px;font-size:1.1rem;padding:14px 32px;background:var(--gold);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;" onclick="showCountrySelect()">⚽ Nieuwe Carrière →</button>
+</div>
 <div id="screen-select" class="screen">
   <img src="/Fast%20Fordward%20FM%20-%20logo%20v1.png" alt="FastForward FM" style="max-width:220px;margin-bottom:8px;border-radius:10px;display:block;margin-left:auto;margin-right:auto">
   <div id="step-land">
@@ -981,6 +1017,8 @@ async function continueAfterNew() {
   await launchGame(false);
 }
 
+function switchLobbyTab(tab,btn){document.querySelectorAll('.lobby-tab').forEach(function(b){b.classList.remove('active');});document.querySelectorAll('.lobby-panel').forEach(function(p){p.style.display='none';});document.getElementById('lobby-'+tab).style.display='';if(btn)btn.classList.add('active');if(tab==='leaderboard')loadLobbyLeaderboard();}
+function loadLobbyLeaderboard(){var el=document.getElementById('lobby-lb-content');if(!el)return;el.textContent='Laden...';fetch('/api/leaderboard').then(function(r){return r.json();}).then(function(data){var top=(data.scores||[]).slice(0,10);if(!top.length){el.innerHTML='<p style="color:var(--dim)">Nog geen scores</p>';return;}el.innerHTML='<table style="width:100%;border-collapse:collapse">'+top.map(function(s,i){return'<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 4px;color:var(--gold);font-weight:700">'+(i+1)+'</td><td style="padding:6px 4px">'+(s.name||'?')+'</td>'<td style="padding:6px 4px;color:var(--dim);font-size:.8rem">'+(s.team||'')+'</td><td style="padding:6px 4px;text-align:right;font-weight:600">'+(s.score||0).toLocaleString('nl-NL')+'</td></tr>';}).join('')+'</table>';}).catch(function(){el.innerHTML='<p style="color:var(--dim)">Kon leaderboard niet laden</p>';});}
 function showCountrySelect(){
   var sl=document.getElementById('step-land');
   var sc=document.getElementById('step-competitie');
@@ -1064,7 +1102,7 @@ async function launchGame(hasSave) {
       }
     } catch (e) { console.warn('Laden mislukt:', e); }
     // Alleen team-select als er echt geen carrière is
-    showCountrySelect();
+    showScreen('lobby');
   });
 }
 async function saveGame() {
