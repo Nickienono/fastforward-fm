@@ -505,8 +505,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 <!-- ══ TEAM SELECT ══ -->
 <div id="screen-select" class="screen">
   <img src="/Fast%20Fordward%20FM%20-%20logo%20v1.png" alt="FastForward FM" style="max-width:220px;margin-bottom:8px;border-radius:10px;display:block;margin-left:auto;margin-right:auto">
-  <p class="sub" id="select-sub">Kies je land</p>
-<div id="step-land">
+  <div id="step-land">
   <button class="flag-btn" onclick="selectLand('nl')">
     <img src="https://flagcdn.com/w320/nl.png" alt="">
   </button>
@@ -1508,13 +1507,11 @@ function buildSquad(teamData) {
 function selectLand(code) {
   document.getElementById('step-land').style.display = 'none';
   document.getElementById('step-competitie').style.display = '';
-  document.getElementById('select-sub').textContent = 'Kies je competitie';
 }
 function switchSelectLeague(league) {
   selectLeague(league);
   document.getElementById('step-competitie').style.display = 'none';
   document.getElementById('step-team').style.display = '';
-  document.getElementById('select-sub').textContent = 'Kies je club';
   buildTeamSelect();
 }
 function buildTeamSelect() {
