@@ -1945,12 +1945,8 @@ function populateAITeams(){
       team.players=rt.allPlayers.map(function(p){
         return{id:p.id,name:p.name,pos:POSMAP[p.pos]||'MID',rating:p.rating,value:p.value,fitness:100,club:team.name,age:p.age};
       });
-    } else {
-      var T={'Ajax':80,'PSV':80,'Feyenoord':79,'AZ':76,'FC Twente':75,'FC Utrecht':74,'sc Heerenveen':72,'Vitesse':71,'NEC':71,'Sparta Rotterdam':70,'Go Ahead Eagles':70,'Fortuna Sittard':69,'PEC Zwolle':68,'RKC Waalwijk':68,'NAC Breda':68,'FC Groningen':67,'Almere City':67,'Heracles Almelo':68};
-      var P=['GK','GK','DEF','DEF','DEF','DEF','DEF','MID','MID','MID','MID','MID','FWD','FWD','FWD','FWD','DEF','MID'];
-      var base=T[team.name]||team.rating||72,pid=90000+Math.floor(Math.random()*9000);
-      team.players=P.map(function(pos){var r=Math.min(99,Math.max(50,base+Math.floor(Math.random()*11)-5));var val=Math.round(Math.pow((r-50)/10,2)*80000+30000);return{id:++pid,name:'Speler '+pid,pos:pos,rating:r,value:val,fitness:100,club:team.name};});
     }
+
   });
 }
 function refreshMarket(){
