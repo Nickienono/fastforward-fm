@@ -1938,7 +1938,7 @@ function populateAITeams(){
     var rt=null;
     if(EREDIVISIE_DATA&&EREDIVISIE_DATA.teams){
       rt=EREDIVISIE_DATA.teams.find(function(t){
-        return t.name===team.name||team.name.indexOf(t.name)>=0||t.name.indexOf(team.name)>=0;
+        return t.name===team.name;
       });
     }
     if(rt&&rt.allPlayers&&rt.allPlayers.length>0){
