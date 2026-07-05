@@ -1096,6 +1096,7 @@ async function launchGame(hasSave) {
           G.freeAgentsDatabase.forEach(function(a){ if (a.attemptsLeft===undefined) a.attemptsLeft=8; });
         }
         if(G.freeSigningsDone===undefined)G.freeSigningsDone=0;
+      populateAITeams();
       renderAll();
         showSaveScreen(false);
         startInactivityTimer();
