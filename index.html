@@ -1945,6 +1945,14 @@ function populateAITeams(){
       team.players=rt.allPlayers.map(function(p){
         return{id:p.id,name:p.name,pos:POSMAP[p.pos]||'MID',rating:p.rating,value:p.value,fitness:100,club:team.name,age:p.age};
       });
+    } else {
+      var kkdT=KKD_BUILTIN.teams.find(function(t){return t.name===team.name;});
+      if(kkdT&&kkdT.allPlayers){
+        var pm={GK:'K',K:'K',V:'V',M:'M',A:'A'};
+        team.starters=kkdT.allPlayers.slice(0,11).map(function(p){
+          return{id:p.id,name:p.name,pos:pm[p.pos]||p.pos,rating:p.rating,value:p.value||0,fitness:100,club:team.name,age:p.age||20};
+        });
+      }
     }
 
   });
