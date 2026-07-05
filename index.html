@@ -2361,7 +2361,7 @@ function renderStandings() {
   }).join('');
   var otherTitle = document.getElementById('standings-other-title');
   var otherBody = document.getElementById('standings-body-other');
-  if(otherTitle) otherTitle.innerHTML='<img src="'+(G.competition==='kkd'?'https://upload.wikimedia.org/wikipedia/commons/8/81/VriendenLoterij_Eredivisie_Logo.png':'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png')+'" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> Ranglijst '+(G.competition==='kkd'?'Eredivisie':'KKD');
+  if(otherTitle) otherTitle.innerHTML='<img src="'+(G.league==='kkd'?'https://upload.wikimedia.org/wikipedia/commons/8/81/VriendenLoterij_Eredivisie_Logo.png':'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png')+'" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> Ranglijst '+(G.league==='kkd'?'Eredivisie':'KKD');
   if(otherBody && G.otherStandings && G.otherStandings.length) {
     var ot = G.otherStandings.slice().sort(function(a,b){ return (b.points-a.points)||((b.gf-b.ga)-(a.gf-a.ga)); });
     var otn = ot.length;
