@@ -2488,14 +2488,14 @@ function renderOpsteliling(){
         '<div style="font-size:.55rem;opacity:.5;cursor:pointer" onclick="event.stopPropagation();unassignSlot('+si+')">✕</div>'+
       '</div>';
     }
-    var lbl={K:'Keeper',V:'Verdediger',M:'Middenvelder',A:'Aanvaller'}[s.pos]||s.pos;
+    var lbl={GK:'Keeper',K:'Keeper',V:'Verdediger',M:'Middenvelder',A:'Aanvaller'}[s.pos]||s.pos;
     return '<div class="slot-empty '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')">'+
       '<div class="slot-plus">+</div><div class="slot-label">'+lbl+'</div></div>';
   }
 
   var aSlots=[],mSlots=[],vSlots=[],gkSlots=[];
   fDef.slots.forEach(function(s,i){
-    if(s.pos==='K')gkSlots.push(i);
+    if(s.pos==='GK'||s.pos==='K')gkSlots.push(i);
     else if(s.pos==='V')vSlots.push(i);
     else if(s.pos==='M')mSlots.push(i);
     else aSlots.push(i);
@@ -2509,7 +2509,7 @@ function renderOpsteliling(){
   var inLU=myTeam.lineup.filter(Boolean).map(function(p){return p.id;});
   var allP=(myTeam.starters||[]).concat(myTeam.bench||[]);
   var pool=allP.filter(function(p){return inLU.indexOf(p.id)<0;});
-  var po={K:0,V:1,M:2,A:3};
+  var po={GK:0,K:0,V:1,M:2,A:3};
   pool.sort(function(a,b){return (po[a.pos]||0)-(po[b.pos]||0)||b.rating-a.rating;});
   var selPos=(window._selSlot!==null&&fDef.slots[window._selSlot])?fDef.slots[window._selSlot].pos:null;
 
