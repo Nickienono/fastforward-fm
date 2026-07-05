@@ -540,9 +540,9 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <button class="lobby-tab" onclick="switchLobbyTab('leaderboard',this)">🏆 Leaderboard</button>
   </div>
   <div id="lobby-updates" class="lobby-panel">
-    <div class="lobby-update-item"><span class="update-badge">v1.3</span><div><b>Logo's toegevoegd</b><p>Competitie- en teamlogo's zichtbaar in ranglijst en teamkeuze.</p></div></div>
-    <div class="lobby-update-item"><span class="update-badge">v1.2</span><div><b>Nieuwe flow</b><p>Vlag → competitie → club selectie.</p></div></div>
-    <div class="lobby-update-item"><span class="update-badge">v1.1</span><div><b>KKD bugfixes</b><p>Promotie en prijzengeld gecorrigeerd.</p></div></div>
+    <div class="lobby-update-item"><span class="update-badge">3.0</span><div><b>KKD 2026 - 2027 teams &amp; selectie toegevoegd</b></div></div>
+    <div class="lobby-update-item"><span class="update-badge">3.1</span><div><b>Nieuwe opstellingen toegevoegd</b><p>433, 424 &amp; 532</p></div></div>
+    <div class="lobby-update-item"><span class="update-badge">3.2</span><div><b>COMING SOON: Eredivisie 2026 - 2027 selecties</b></div></div>
   </div>
   <div id="lobby-regels" class="lobby-panel" style="display:none">
     <ul class="rules-list">
@@ -569,7 +569,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 <div id="step-competitie" style="display:none">
   <div class="comp-grid">
     <button class="comp-btn" onclick="switchSelectLeague('eredivisie')">
-      <img src="https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/eredivisie-logo.png" alt="">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/8/81/VriendenLoterij_Eredivisie_Logo.png" alt="">
     </button>
     <button class="comp-btn" onclick="switchSelectLeague('kkd')">
       <img src="https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png" alt="">
@@ -2345,7 +2345,7 @@ function renderStandings() {
   var sorted = getSorted();
   var n = sorted.length;
   var stTitle = document.getElementById('standings-title');
-  if(stTitle){var lLogo=G&&G.league==='kkd'?'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png':'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/eredivisie-logo.png';stTitle.innerHTML='<img src="'+lLogo+'" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> Ranglijst '+(G&&G.league==='kkd'?'KKD':'Eredivisie');}
+  if(stTitle){var lLogo=G&&G.league==='kkd'?'https://raw.githubusercontent.com/Nickienono/fastforward-fm/main/logos/KKD-logo.png':'https://upload.wikimedia.org/wikipedia/commons/8/81/VriendenLoterij_Eredivisie_Logo.png';stTitle.innerHTML='<img src="'+lLogo+'" style="height:24px;vertical-align:middle;margin-right:6px;object-fit:contain;"> Ranglijst '+(G&&G.league==='kkd'?'KKD':'Eredivisie');}
   document.getElementById('standings-body').innerHTML = sorted.map(function(t, i) {
     var pos = i + 1;
     var rankCls = pos===1 ? 'champion' : pos<=4 ? 'europe' : pos>=n-2 ? 'relegation' : '';
