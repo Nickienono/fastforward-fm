@@ -236,6 +236,25 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .fitness-fill.lo  { background: var(--red); }
 .bench-divider { border-top: 1px dashed rgba(255,255,255,.18); margin: 6px 0 10px; text-align: center; font-size: .6rem; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; padding-top: 8px; }
 .bench-in-pitch { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-bottom: 6px; }
+/* ── FORMATION SYSTEM ── */
+.formation-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.formation-select{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:0.82rem;cursor:pointer;}
+.slot-empty{background:transparent;border:2px dashed rgba(255,255,255,.25);border-radius:8px;padding:8px 10px;text-align:center;cursor:pointer;min-width:80px;transition:all .15s;user-select:none;}
+.slot-empty:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.04);}
+.slot-empty.pos-gk{border-color:rgba(40,167,69,.45);}.slot-empty.pos-def{border-color:rgba(220,53,69,.45);}.slot-empty.pos-mid{border-color:rgba(255,193,7,.45);}.slot-empty.pos-att{border-color:rgba(0,123,255,.45);}
+.slot-empty .slot-plus{font-size:1.2rem;opacity:.5;line-height:1;}.slot-empty .slot-label{font-size:0.62rem;color:var(--dim);margin-top:2px;}
+.slot-empty.slot-active{border-style:solid!important;border-width:2.5px!important;}
+.slot-empty.slot-active.pos-gk{border-color:rgba(40,167,69,.9)!important;background:rgba(40,167,69,.12)!important;}
+.slot-empty.slot-active.pos-def{border-color:rgba(220,53,69,.9)!important;background:rgba(220,53,69,.12)!important;}
+.slot-empty.slot-active.pos-mid{border-color:rgba(255,193,7,.9)!important;background:rgba(255,193,7,.12)!important;}
+.slot-empty.slot-active.pos-att{border-color:rgba(0,123,255,.9)!important;background:rgba(0,123,255,.12)!important;}
+.pcard.slot-active{border-color:var(--gold)!important;box-shadow:0 0 12px rgba(240,165,0,.35)!important;}
+.bench-pool{padding:0 16px 16px;}
+.bench-pool-title{font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.12);}
+.bench-pool-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.pcard.bench-cand{box-shadow:0 0 8px rgba(240,165,0,.5)!important;border-color:var(--gold)!important;}
+.pcard.bench-dim{opacity:.4;cursor:default;}
+
 .pcard.bench-card { opacity: .88; }
 .pcard.bench-card:hover { opacity: 1; }
 .pcard.bench-card.selected { opacity: 1; }
@@ -625,10 +644,17 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
         <div id="tab-opstelling" class="tab">
       <div class="pitch-wrap">
         <div class="pitch-header">
-          <h3>⚽ Basiself (4-3-3)</h3>
-          <span class="swap-hint" id="swap-hint">Klik twee spelers om te wisselen</span>
+          <div class="formation-wrap">
+            <h3 id="formation-title">⚽ Basiself</h3>
+            <select class="formation-select" id="formation-select" onchange="switchFormation(this.value)">
+              <option value="433">4-3-3</option>
+              <option value="442d">4-4-2 Def</option>
+            </select>
+          </div>
+          <span class="swap-hint" id="swap-hint">Klik een slot → dan een speler van de bank</span>
         </div>
         <div class="pitch" id="pitch"></div>
+        <div id="bench-pool-container"></div>
       </div>
 
       <div class="sub-plan-wrap">
@@ -1096,6 +1122,13 @@ async function launchGame(hasSave) {
           G.freeAgentsDatabase.forEach(function(a){ if (a.attemptsLeft===undefined) a.attemptsLeft=8; });
         }
         if(G.freeSigningsDone===undefined)G.freeSigningsDone=0;
+            // ── Migration: add lineup/formation for old saves ──
+      if(!G.formation)G.formation='433';
+      var myTM=G.teams&&G.teams.find(function(t){return t.name===G.myName;});
+      if(myTM&&!myTM.lineup){
+        var fSlots=(FORMATIONS[G.formation]||FORMATIONS['433']).slots.length;
+        myTM.lineup=Array(fSlots).fill(null);
+      }
       populateAITeams();
       renderAll();
         showSaveScreen(false);
@@ -1591,6 +1624,7 @@ function startGame(teamIdx) {
       imageUrl:     def.imageUrl,
       primaryColor: def.primaryColor,
       isMe:         i === teamIdx,
+      lineup:       i === teamIdx ? Array(11).fill(null) : [],
       starters,
       bench,
       budget:  def.budget,
@@ -1608,6 +1642,7 @@ function startGame(teamIdx) {
     schedule,
     totalRounds,
     round:  0,
+    formation: '433',
     season: 1,
     results: [],
     market:      generateMarket(),
@@ -1931,7 +1966,21 @@ function generateMarket(){
   return pool;
 }
 var EREDIVISIE_DATA = {"generated":"2026-06-26T10:56:47.703Z","teams":[{"id":"383","name":"PSV","tier":88,"allPlayers":[{"id":296802,"name":"Walter Benítez","pos":"GK","rating":81,"value":7500000,"age":32},{"id":333640,"name":"Joël Drommel","pos":"GK","rating":69,"value":1500000,"age":28},{"id":586429,"name":"Ryan Flamingo","pos":"V","rating":88,"value":20000000,"age":22},{"id":318508,"name":"Olivier Boscagli","pos":"V","rating":88,"value":20000000,"age":27},{"id":800976,"name":"Adamo Nagalo","pos":"V","rating":79,"value":6000000,"age":22},{"id":339337,"name":"Armando Obispo","pos":"V","rating":74,"value":3000000,"age":26},{"id":323910,"name":"Mauro Júnior","pos":"V","rating":84,"value":12000000,"age":26},{"id":339340,"name":"Tyrell Malacia","pos":"V","rating":81,"value":8000000,"age":25},{"id":361104,"name":"Sergiño Dest","pos":"V","rating":86,"value":16000000,"age":24},{"id":364245,"name":"Jordan Teze","pos":"V","rating":82,"value":9000000,"age":25},{"id":347900,"name":"Jerdy Schouten","pos":"M","rating":88,"value":22000000,"age":28},{"id":408574,"name":"Joey Veerman","pos":"M","rating":89,"value":25000000,"age":26},{"id":467437,"name":"Malik Tillman","pos":"M","rating":91,"value":32000000,"age":23},{"id":702869,"name":"Ismael Saibari","pos":"M","rating":90,"value":27000000,"age":24},{"id":372267,"name":"Guus Til","pos":"M","rating":84,"value":12000000,"age":27},{"id":813437,"name":"Isaac Babadi","pos":"M","rating":74,"value":3000000,"age":20},{"id":339332,"name":"Noa Lang","pos":"A","rating":89,"value":25000000,"age":26},{"id":316889,"name":"Hirving Lozano","pos":"A","rating":83,"value":10000000,"age":29},{"id":593837,"name":"Couhaib Driouech","pos":"A","rating":76,"value":4000000,"age":23},{"id":565424,"name":"Johan Bakayoko","pos":"A","rating":90,"value":30000000,"age":22},{"id":627207,"name":"Ricardo Pepi","pos":"A","rating":86,"value":16000000,"age":22},{"id":72522,"name":"Luuk de Jong","pos":"A","rating":73,"value":2500000,"age":34}]},{"id":"234","name":"Feyenoord","tier":87,"allPlayers":[{"id":196829,"name":"Timon Wellenreuther","pos":"GK","rating":79,"value":6000000,"age":29},{"id":315121,"name":"Justin Bijlow","pos":"GK","rating":78,"value":5000000,"age":27},{"id":404418,"name":"Dávid Hancko","pos":"V","rating":90,"value":30000000,"age":27},{"id":593862,"name":"Thomas Beelen","pos":"V","rating":81,"value":8000000,"age":24},{"id":825199,"name":"Facundo González","pos":"V","rating":74,"value":3000000,"age":22},{"id":514285,"name":"Quilindschy Hartman","pos":"V","rating":85,"value":14000000,"age":23},{"id":698678,"name":"Hugo Bueno","pos":"V","rating":81,"value":8000000,"age":22},{"id":374212,"name":"Gijs Smal","pos":"V","rating":80,"value":7000000,"age":27},{"id":420210,"name":"Lutsharel Geertruida","pos":"V","rating":88,"value":20000000,"age":24},{"id":997903,"name":"Givairo Read","pos":"V","rating":86,"value":16000000,"age":19},{"id":365394,"name":"In-beom Hwang","pos":"M","rating":83,"value":10000000,"age":28},{"id":416660,"name":"Ramiz Zerrouki","pos":"M","rating":78,"value":5000000,"age":27},{"id":420213,"name":"Quinten Timber","pos":"M","rating":90,"value":30000000,"age":24},{"id":384461,"name":"Jakub Moder","pos":"M","rating":84,"value":12000000,"age":26},{"id":683620,"name":"Antoni Milambo","pos":"M","rating":87,"value":18000000,"age":20},{"id":409344,"name":"Calvin Stengs","pos":"M","rating":80,"value":7000000,"age":26},{"id":321195,"name":"Ondrej Lingr","pos":"M","rating":74,"value":3000000,"age":26},{"id":653610,"name":"Igor Paixão","pos":"A","rating":92,"value":35000000,"age":25},{"id":1110406,"name":"Ibrahim Osman","pos":"A","rating":83,"value":10000000,"age":20},{"id":710886,"name":"Leo Sauer","pos":"A","rating":78,"value":5000000,"age":19},{"id":917911,"name":"Anis Hadj Moussa","pos":"A","rating":85,"value":14000000,"age":23},{"id":552955,"name":"Santiago Gimenez","pos":"A","rating":90,"value":30000000,"age":24},{"id":589128,"name":"Ayase Ueda","pos":"A","rating":81,"value":8000000,"age":26},{"id":491707,"name":"Julián Carranza","pos":"A","rating":78,"value":5000000,"age":25}]},{"id":"610","name":"Ajax","tier":85,"allPlayers":[{"id":448705,"name":"Diant Ramaj","pos":"GK","rating":80,"value":7000000,"age":23},{"id":177547,"name":"Matheus","pos":"GK","rating":73,"value":2500000,"age":33},{"id":371001,"name":"Josip Sutalo","pos":"V","rating":89,"value":24000000,"age":25},{"id":559327,"name":"Youri Baas","pos":"V","rating":84,"value":12000000,"age":22},{"id":662131,"name":"Ahmetcan Kaplan","pos":"V","rating":78,"value":5000000,"age":22},{"id":904802,"name":"Jorrel Hato","pos":"V","rating":92,"value":35000000,"age":19},{"id":339328,"name":"Owen Wijndal","pos":"V","rating":75,"value":3500000,"age":25},{"id":557407,"name":"Devyne Rensch","pos":"V","rating":83,"value":10000000,"age":22},{"id":701055,"name":"Anton Gaaei","pos":"V","rating":80,"value":7000000,"age":22},{"id":1105532,"name":"Jorthy Mokio","pos":"M","rating":81,"value":8000000,"age":17},{"id":559324,"name":"Youri Regeer","pos":"M","rating":79,"value":6000000,"age":21},{"id":510310,"name":"Sivert Mannsverk","pos":"M","rating":76,"value":4000000,"age":23},{"id":470394,"name":"Kenneth Taylor","pos":"M","rating":90,"value":28000000,"age":23},{"id":559333,"name":"Kian Fitz-Jim","pos":"M","rating":78,"value":5000000,"age":21},{"id":694186,"name":"Kristian Hlynsson","pos":"M","rating":76,"value":4000000,"age":21},{"id":284165,"name":"Steven Bergwijn","pos":"A","rating":85,"value":14000000,"age":27},{"id":748804,"name":"Mika Godts","pos":"A","rating":83,"value":10000000,"age":20},{"id":742451,"name":"Carlos Forbs","pos":"A","rating":81,"value":8000000,"age":21},{"id":131996,"name":"Bertrand Traoré","pos":"A","rating":81,"value":8000000,"age":29},{"id":473169,"name":"Brian Brobbey","pos":"A","rating":88,"value":22000000,"age":23},{"id":197642,"name":"Chuba Akpom","pos":"A","rating":80,"value":7000000,"age":29},{"id":228645,"name":"Wout Weghorst","pos":"A","rating":76,"value":4000000,"age":32}]},{"id":"1090","name":"AZ","tier":81,"allPlayers":[{"id":704772,"name":"Rome-Jayden Owusu-Oduro","pos":"GK","rating":79,"value":6000000,"age":20},{"id":646707,"name":"Wouter Goes","pos":"V","rating":83,"value":10000000,"age":21},{"id":479643,"name":"Alexandre Penetra","pos":"V","rating":82,"value":9000000,"age":23},{"id":216443,"name":"Riechedly Bazoer","pos":"V","rating":74,"value":3000000,"age":28},{"id":661427,"name":"David Moller Wolfe","pos":"V","rating":82,"value":9000000,"age":23},{"id":733438,"name":"Seiya Maikuma","pos":"V","rating":76,"value":4000000,"age":27},{"id":577394,"name":"Denso Kasius","pos":"V","rating":76,"value":4000000,"age":22},{"id":361074,"name":"Peer Koopmeiners","pos":"M","rating":83,"value":10000000,"age":25},{"id":507223,"name":"Kristijan Belic","pos":"M","rating":75,"value":3500000,"age":24},{"id":859035,"name":"Kees Smit","pos":"M","rating":78,"value":5000000,"age":19},{"id":595940,"name":"Zico Buurmeester","pos":"M","rating":75,"value":3500000,"age":23},{"id":578804,"name":"Sven Mijnans","pos":"M","rating":82,"value":9000000,"age":25},{"id":735701,"name":"Ruben van Bommel","pos":"A","rating":81,"value":8000000,"age":20},{"id":650712,"name":"Myron van Brederode","pos":"A","rating":74,"value":3000000,"age":21},{"id":718303,"name":"Ernest Poku","pos":"A","rating":76,"value":4000000,"age":21},{"id":543501,"name":"Ibrahim Sadiq","pos":"A","rating":75,"value":3500000,"age":25},{"id":795274,"name":"Mayckel Lahdo","pos":"A","rating":74,"value":3000000,"age":22},{"id":552655,"name":"Troy Parrott","pos":"A","rating":85,"value":14000000,"age":23},{"id":678546,"name":"Mexx Meerdink","pos":"A","rating":81,"value":8000000,"age":21}]},{"id":"317","name":"FC Twente","tier":78,"allPlayers":[{"id":53696,"name":"Lars Unnerstall","pos":"GK","rating":71,"value":2000000,"age":34},{"id":562702,"name":"Mees Hilgers","pos":"V","rating":80,"value":6500000,"age":24},{"id":485395,"name":"Gustaf Lagerbielke","pos":"V","rating":74,"value":3000000,"age":25},{"id":618086,"name":"Max Bruns","pos":"V","rating":73,"value":2500000,"age":22},{"id":485584,"name":"Anass Salah-Eddine","pos":"V","rating":81,"value":8000000,"age":23},{"id":547499,"name":"Bart van Rooij","pos":"V","rating":79,"value":6000000,"age":24},{"id":332530,"name":"Alfons Sampsted","pos":"V","rating":71,"value":2000000,"age":27},{"id":321204,"name":"Michal Sadílek","pos":"M","rating":81,"value":8000000,"age":26},{"id":388220,"name":"Sayfallah Ltaief","pos":"M","rating":71,"value":1800000,"age":25},{"id":593519,"name":"Sem Steijn","pos":"M","rating":86,"value":16000000,"age":23},{"id":342702,"name":"Michel Vlap","pos":"M","rating":78,"value":5000000,"age":28},{"id":591363,"name":"Daan Rots","pos":"A","rating":76,"value":4000000,"age":23},{"id":513963,"name":"Taylor Booth","pos":"A","rating":71,"value":2000000,"age":24},{"id":393239,"name":"Mitchell van Bergen","pos":"A","rating":69,"value":1500000,"age":25},{"id":386914,"name":"Sam Lammers","pos":"A","rating":76,"value":4000000,"age":28}]},{"id":"200","name":"FC Utrecht","tier":77,"allPlayers":[{"id":248658,"name":"Vasilios Barkas","pos":"GK","rating":75,"value":3500000,"age":31},{"id":541134,"name":"Souffian El Karouani","pos":"V","rating":82,"value":9000000,"age":24},{"id":314915,"name":"Siebe Horemans","pos":"V","rating":75,"value":3500000,"age":27},{"id":565436,"name":"Alonzo Engwanda","pos":"M","rating":73,"value":2500000,"age":22},{"id":686845,"name":"Zidane Iqbal","pos":"M","rating":76,"value":4000000,"age":22},{"id":610428,"name":"Oscar Fraulo","pos":"M","rating":75,"value":3500000,"age":21},{"id":406609,"name":"Can Bozdogan","pos":"M","rating":75,"value":3500000,"age":24},{"id":795738,"name":"Paxten Aaronson","pos":"M","rating":81,"value":8000000,"age":21},{"id":782476,"name":"Yoann Cathline","pos":"A","rating":81,"value":8000000,"age":22},{"id":634427,"name":"Miguel Rodríguez","pos":"A","rating":77,"value":4500000,"age":22},{"id":181375,"name":"Sébastien Haller","pos":"A","rating":74,"value":3000000,"age":31},{"id":557410,"name":"Noah Ohio","pos":"A","rating":71,"value":2000000,"age":22},{"id":361070,"name":"Ole Romeny","pos":"A","rating":68,"value":1200000,"age":25}]},{"id":"306","name":"sc Heerenveen","tier":74,"allPlayers":[{"id":276853,"name":"Andries Noppert","pos":"GK","rating":66,"value":1000000,"age":31},{"id":894050,"name":"Nikolai Hopland","pos":"V","rating":74,"value":3000000,"age":20},{"id":248395,"name":"Pawel Bochniewicz","pos":"V","rating":73,"value":2500000,"age":29},{"id":430797,"name":"Sam Kersten","pos":"V","rating":66,"value":1000000,"age":27},{"id":288067,"name":"Mats Köhlert","pos":"V","rating":75,"value":3500000,"age":27},{"id":869067,"name":"Oliver Braude","pos":"V","rating":76,"value":4000000,"age":21},{"id":899163,"name":"Marcus Linday","pos":"M","rating":76,"value":4000000,"age":22},{"id":321158,"name":"Simon Olsson","pos":"M","rating":71,"value":2000000,"age":27},{"id":369552,"name":"Luuk Brouwers","pos":"M","rating":73,"value":2500000,"age":27},{"id":918365,"name":"Levi Smans","pos":"M","rating":71,"value":2000000,"age":22},{"id":542684,"name":"Jacob Trenskow","pos":"A","rating":76,"value":4000000,"age":24},{"id":845872,"name":"Milos Lukovic","pos":"A","rating":78,"value":5000000,"age":19},{"id":661205,"name":"Daniel Karlsbakk","pos":"A","rating":73,"value":2500000,"age":22},{"id":438310,"name":"Ion Nicolaescu","pos":"A","rating":69,"value":1500000,"age":26}]},{"id":"468","name":"Sparta","tier":74,"allPlayers":[{"id":215094,"name":"Nick Olij","pos":"GK","rating":75,"value":3500000,"age":29},{"id":928592,"name":"Marvin Young","pos":"V","rating":73,"value":2500000,"age":19},{"id":482141,"name":"Mike Eerdhuijzen","pos":"V","rating":72,"value":2300000,"age":24},{"id":596148,"name":"Djevencio van der Kust","pos":"V","rating":63,"value":600000,"age":24},{"id":524687,"name":"Said Bakari","pos":"V","rating":63,"value":650000,"age":30},{"id":432694,"name":"Joshua Kitolano","pos":"M","rating":73,"value":2500000,"age":23},{"id":859396,"name":"Metinho","pos":"M","rating":74,"value":3000000,"age":22},{"id":694186,"name":"Kristian Hlynsson","pos":"M","rating":76,"value":4000000,"age":21},{"id":668265,"name":"Kayky","pos":"A","rating":79,"value":6000000,"age":22},{"id":587588,"name":"Camiel Neghli","pos":"A","rating":71,"value":2000000,"age":23},{"id":272206,"name":"Tobias Lauritsen","pos":"A","rating":75,"value":3500000,"age":27},{"id":381349,"name":"Nokkvi Thorisson","pos":"A","rating":63,"value":600000,"age":25}]},{"id":"1435","name":"Go Ahead Eagles","tier":73,"allPlayers":[{"id":315253,"name":"Jeffrey de Lange","pos":"GK","rating":71,"value":2000000,"age":27},{"id":426849,"name":"Jari De Busser","pos":"GK","rating":71,"value":2000000,"age":25},{"id":326329,"name":"Joris Kramer","pos":"V","rating":71,"value":2000000,"age":28},{"id":529223,"name":"Dean James","pos":"V","rating":71,"value":1800000,"age":25},{"id":369554,"name":"Mats Deijl","pos":"V","rating":71,"value":2000000,"age":27},{"id":412945,"name":"Enric Llansana","pos":"M","rating":76,"value":4000000,"age":24},{"id":361112,"name":"Evert Linthorst","pos":"M","rating":73,"value":2500000,"age":25},{"id":657957,"name":"Jakob Breum","pos":"M","rating":78,"value":5000000,"age":21},{"id":374326,"name":"Oliver Edvardsen","pos":"A","rating":78,"value":5000000,"age":26},{"id":527896,"name":"Oliver Antman","pos":"A","rating":79,"value":6000000,"age":23},{"id":703772,"name":"Milan Smit","pos":"A","rating":69,"value":1500000,"age":22},{"id":265324,"name":"Victor Edvardsen","pos":"A","rating":68,"value":1300000,"age":29}]},{"id":"467","name":"NEC","tier":73,"allPlayers":[{"id":646991,"name":"Robin Roefs","pos":"GK","rating":76,"value":4000000,"age":22},{"id":340460,"name":"Philippe Sandler","pos":"V","rating":72,"value":2300000,"age":28},{"id":258364,"name":"Calvin Verdonk","pos":"V","rating":73,"value":2500000,"age":28},{"id":547499,"name":"Bart van Rooij","pos":"V","rating":79,"value":6000000,"age":24},{"id":485587,"name":"Dirk Proper","pos":"M","rating":74,"value":3000000,"age":23},{"id":957544,"name":"Kodai Sano","pos":"M","rating":76,"value":4000000,"age":21},{"id":747016,"name":"Sami Ouaissa","pos":"M","rating":69,"value":1500000,"age":20},{"id":312493,"name":"Vito van Crooij","pos":"M","rating":69,"value":1500000,"age":29},{"id":485582,"name":"Sontje Hansen","pos":"A","rating":76,"value":4000000,"age":23},{"id":505675,"name":"Rober González","pos":"A","rating":69,"value":1500000,"age":24},{"id":351567,"name":"Koki Ogawa","pos":"A","rating":73,"value":2500000,"age":27}]},{"id":"202","name":"FC Groningen","tier":71,"allPlayers":[{"id":387197,"name":"Etienne Vaessen","pos":"GK","rating":71,"value":2000000,"age":29},{"id":392179,"name":"Hjalmar Ekdal","pos":"V","rating":77,"value":4500000,"age":26},{"id":719209,"name":"Thijmen Blokzijl","pos":"V","rating":71,"value":2000000,"age":20},{"id":671734,"name":"Wouter Prins","pos":"V","rating":65,"value":800000,"age":21},{"id":237244,"name":"Marco Rente","pos":"V","rating":65,"value":800000,"age":28},{"id":793099,"name":"Stije Resink","pos":"M","rating":76,"value":4000000,"age":22},{"id":601495,"name":"Luciano Valente","pos":"M","rating":80,"value":7000000,"age":21},{"id":418557,"name":"Johan Hove","pos":"M","rating":71,"value":2000000,"age":24},{"id":671735,"name":"Jorg Schreuders","pos":"A","rating":68,"value":1200000,"age":20},{"id":671738,"name":"Thom van Bergen","pos":"A","rating":68,"value":1300000,"age":21},{"id":464444,"name":"Brynjolfur Willumsson","pos":"A","rating":64,"value":700000,"age":24},{"id":513330,"name":"Romano Postema","pos":"A","rating":61,"value":450000,"age":23}]},{"id":"1269","name":"PEC Zwolle","tier":70,"allPlayers":[{"id":361082,"name":"Jasper Schendelaar","pos":"GK","rating":73,"value":2500000,"age":24},{"id":631904,"name":"Anselmo Garcia MacNulty","pos":"V","rating":69,"value":1500000,"age":22},{"id":542858,"name":"Simon Graves","pos":"V","rating":69,"value":1500000,"age":26},{"id":315211,"name":"Sherel Floranus","pos":"V","rating":65,"value":850000,"age":26},{"id":656800,"name":"Tristan Gooijer","pos":"V","rating":69,"value":1500000,"age":20},{"id":361066,"name":"Davy van den Berg","pos":"M","rating":71,"value":2000000,"age":25},{"id":593774,"name":"Anouar El Azzouzi","pos":"M","rating":71,"value":1800000,"age":24},{"id":486814,"name":"Filip Krastev","pos":"M","rating":76,"value":4000000,"age":23},{"id":502289,"name":"Dylan Mbayo","pos":"A","rating":71,"value":2000000,"age":23},{"id":369319,"name":"Dylan Vente","pos":"A","rating":71,"value":2000000,"age":26},{"id":357826,"name":"Thomas Buitink","pos":"A","rating":60,"value":400000,"age":25}]},{"id":"385","name":"Fortuna Sittard","tier":68,"allPlayers":[{"id":205128,"name":"Mattijs Branderhorst","pos":"GK","rating":65,"value":800000,"age":31},{"id":492313,"name":"Rodrigo Guth","pos":"V","rating":74,"value":2800000,"age":24},{"id":358021,"name":"Shawn Adewoye","pos":"V","rating":68,"value":1300000,"age":25},{"id":576682,"name":"Jasper Dahlhaus","pos":"V","rating":66,"value":1000000,"age":23},{"id":215099,"name":"Daley Sinkgraven","pos":"V","rating":63,"value":600000,"age":29},{"id":659521,"name":"Edouard Michut","pos":"M","rating":71,"value":1800000,"age":22},{"id":627068,"name":"Ezequiel Bullaude","pos":"M","rating":73,"value":2500000,"age":24},{"id":226074,"name":"Alen Halilovic","pos":"M","rating":66,"value":1000000,"age":29},{"id":186704,"name":"Kristoffer Peterson","pos":"A","rating":65,"value":800000,"age":30},{"id":315283,"name":"Kaj Sierhuis","pos":"A","rating":68,"value":1300000,"age":27},{"id":516407,"name":"Bojan Radulovic","pos":"A","rating":65,"value":800000,"age":25}]},{"id":"132","name":"NAC Breda","tier":67,"allPlayers":[{"id":463233,"name":"Daniel Bielica","pos":"GK","rating":66,"value":1000000,"age":26},{"id":434110,"name":"Leo Greiml","pos":"V","rating":71,"value":2000000,"age":23},{"id":334495,"name":"Jan Van den Bergh","pos":"V","rating":65,"value":800000,"age":30},{"id":936581,"name":"Cherrion Valerius","pos":"V","rating":66,"value":1000000,"age":19},{"id":570817,"name":"Maxime Busi","pos":"V","rating":66,"value":1000000,"age":25},{"id":849428,"name":"Max Balard","pos":"M","rating":69,"value":1500000,"age":24},{"id":564489,"name":"Kamal Sowah","pos":"M","rating":65,"value":800000,"age":25},{"id":522993,"name":"Dominik Janosek","pos":"M","rating":64,"value":750000,"age":27},{"id":710886,"name":"Leo Sauer","pos":"A","rating":78,"value":5000000,"age":19},{"id":439292,"name":"Sydney van Hooijdonk","pos":"A","rating":66,"value":1000000,"age":25},{"id":205655,"name":"Elias Mar Omarsson","pos":"A","rating":64,"value":700000,"age":30}]},{"id":"1304","name":"Heracles","tier":67,"allPlayers":[{"id":462285,"name":"Fabian de Keijzer","pos":"GK","rating":69,"value":1500000,"age":25},{"id":482838,"name":"Ivan Mesik","pos":"V","rating":68,"value":1300000,"age":24},{"id":983677,"name":"Mats Rots","pos":"V","rating":66,"value":1000000,"age":19},{"id":538963,"name":"Ruben Roosken","pos":"V","rating":63,"value":600000,"age":25},{"id":591880,"name":"Mimeirhel Benita","pos":"V","rating":66,"value":1000000,"age":21},{"id":447801,"name":"Jannes Wieckhoff","pos":"V","rating":63,"value":650000,"age":24},{"id":429916,"name":"Brian De Keersmaecker","pos":"M","rating":74,"value":3000000,"age":25},{"id":618083,"name":"Sem Scheperman","pos":"M","rating":66,"value":900000,"age":23},{"id":741587,"name":"Juho Talvitie","pos":"A","rating":66,"value":900000,"age":20},{"id":185817,"name":"Jizz Hornkamp","pos":"A","rating":68,"value":1300000,"age":27},{"id":569470,"name":"Luka Kulenovic","pos":"A","rating":68,"value":1200000,"age":25}]},{"id":"723","name":"Almere City","tier":65,"allPlayers":[{"id":534015,"name":"Nordin Bakker","pos":"GK","rating":64,"value":700000,"age":27},{"id":630989,"name":"Ricardo Visus","pos":"V","rating":64,"value":750000,"age":24},{"id":313504,"name":"Marvin Martins","pos":"V","rating":60,"value":400000,"age":30},{"id":315211,"name":"Sherel Floranus","pos":"V","rating":65,"value":850000,"age":26},{"id":793099,"name":"Stije Resink","pos":"M","rating":76,"value":4000000,"age":22},{"id":178219,"name":"Thom Haye","pos":"M","rating":66,"value":1000000,"age":30},{"id":865281,"name":"Jochem Ritmeester","pos":"M","rating":65,"value":800000,"age":21},{"id":585958,"name":"Junior Kadile","pos":"A","rating":63,"value":650000,"age":22},{"id":569386,"name":"Logan Delaurier-Chaubet","pos":"A","rating":60,"value":400000,"age":23},{"id":264567,"name":"Baptiste Guillaume","pos":"A","rating":61,"value":450000,"age":30}]},{"id":"235","name":"RKC","tier":63,"allPlayers":[{"id":257980,"name":"Jeroen Houwen","pos":"GK","rating":60,"value":400000,"age":29},{"id":480730,"name":"Redouan El Yaakoubi","pos":"V","rating":62,"value":550000,"age":29},{"id":235274,"name":"Dario Van den Buijs","pos":"V","rating":61,"value":500000,"age":29},{"id":412933,"name":"Liam van Gelderen","pos":"V","rating":61,"value":500000,"age":24},{"id":829819,"name":"Faissal Al Mazyani","pos":"V","rating":63,"value":650000,"age":20},{"id":566911,"name":"Yassin Oukili","pos":"M","rating":66,"value":900000,"age":24},{"id":503638,"name":"Mohamed Ihattaren","pos":"M","rating":66,"value":1000000,"age":23},{"id":886260,"name":"Tim van de Loo","pos":"M","rating":63,"value":600000,"age":22},{"id":232015,"name":"Oskar Zawada","pos":"A","rating":64,"value":700000,"age":29},{"id":465326,"name":"Richonell Margaret","pos":"A","rating":64,"value":700000,"age":24},{"id":582131,"name":"Denilho Cleonise","pos":"A","rating":60,"value":400000,"age":23}]}]};
-function populateAITeams(){
+fvar FORMATIONS={
+  "433":{name:"4-3-3",slots:[
+    {pos:"K",label:"Keeper"},
+    {pos:"V",label:"VD"},{pos:"V",label:"VD"},{pos:"V",label:"VD"},{pos:"V",label:"VD"},
+    {pos:"M",label:"MV"},{pos:"M",label:"MV"},{pos:"M",label:"MV"},
+    {pos:"A",label:"AV"},{pos:"A",label:"AV"},{pos:"A",label:"AV"}
+  ]},
+  "442d":{name:"4-4-2 Def",slots:[
+    {pos:"K",label:"Keeper"},
+    {pos:"V",label:"VD"},{pos:"V",label:"VD"},{pos:"V",label:"VD"},{pos:"V",label:"VD"},
+    {pos:"M",label:"MV"},{pos:"M",label:"MV"},{pos:"M",label:"MV"},{pos:"M",label:"MV"},
+    {pos:"A",label:"AV"},{pos:"A",label:"AV"}
+  ]}
+};
+unction populateAITeams(){
   if(!G||!G.teams)return;
   var pm={GK:'K',K:'K',V:'V',M:'M',A:'A'};
   G.teams.forEach(function(team){
@@ -2402,47 +2451,145 @@ function removeBaseSub(i) {
   G.basePlannedSubs.splice(i, 1);
   saveGame(); renderBaseSubs();
 }
-function renderOpsteliling() {
-  const myTeam = G.teams.find(t => t.name === G.myName);
-  const _np=p=>({'GK':'GK','DEF':'V','MID':'M','FWD':'A'}[p.pos]||p.pos);
-  const _pm={A:[],M:[],V:[],GK:[]};
-  myTeam.starters.forEach((p,i)=>{var k=_np(p);if(_pm[k])_pm[k].push({...p,pos:k,_si:i});});
-  const rows=[_pm.A,_pm.M,_pm.V,_pm.GK];
+function renderOpsteliling(){
+  if(!G||!G.teams)return;
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  var formation=G.formation||'433';
+  var fDef=FORMATIONS[formation]||FORMATIONS['433'];
+  if(!myTeam.lineup||myTeam.lineup.length!==fDef.slots.length){
+    myTeam.lineup=Array(fDef.slots.length).fill(null);
+  }
+  var sel=document.getElementById('formation-select');
+  if(sel)sel.value=formation;
+  if(typeof window._selSlot==='undefined')window._selSlot=null;
 
-  document.getElementById('pitch').innerHTML = rows.map(row =>
-    `<div class="pitch-row">${row.map(p => {
-      const idx = myTeam.starters.indexOf(p);
-      const sel = selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===p._si;
-      return `<div class="pcard ${posClass(p.pos)}${sel?' selected':''}" onclick="selectPlayer('pitch',${p._si})">
-        <div class="prating">${p.rating}</div>
-        <div class="pname">${p.name.split(' ').slice(1).join(' ')}</div>
-        <div class="ppos">${p.pos}${p.age?' · '+p.age:''}</div>
-        <div class="fitness-bar"><div class="fitness-fill ${fitColor(p.fitness)}" style="width:${p.fitness}%"></div></div>
-      </div>`;
-    }).join('')}</div>`
-  ).join('');
-
-  // Bank in pitch renderen
-  const pitchEl = document.getElementById('pitch');
-  if (pitchEl) {
-    const benchHTML = myTeam.bench.map((p, idx) => {
-      const sel = selectedPlayer && selectedPlayer.from==='bench' && selectedPlayer.idx===idx;
-      return `<div class="pcard ${posClass(p.pos)} bench-card${sel?' selected':''}" onclick="selectPlayer('bench',${idx})">
-        <div class="prating">${p.rating}</div>
-        <div class="pname">${p.name.split(' ').slice(1).join(' ')}</div>
-        <div class="ppos">${p.pos}</div>
-        <div class="fitness-bar"><div class="fitness-fill ${fitColor(p.fitness)}" style="width:${p.fitness}%"></div></div>
-      </div>`;
-    }).join('');
-    pitchEl.innerHTML += '<div class="bench-divider">🪑 Wisselbank</div><div class="bench-in-pitch">' + benchHTML + '</div>';
+  function slotCard(si){
+    var p=myTeam.lineup[si];
+    var s=fDef.slots[si];
+    var pc=posClass(s.pos);
+    var act=(window._selSlot===si);
+    if(p){
+      var nm=p.name.split(' ').slice(-1)[0];
+      return '<div class="pcard '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')" style="min-width:72px;text-align:center">'+
+        '<div class="prating">'+p.rating+'</div>'+
+        '<div class="pname">'+nm+'</div>'+
+        '<div class="ppos">'+p.pos+(p.age?' · '+p.age:'')+'</div>'+
+        '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+p.fitness+'%"></div></div>'+
+        '<div style="font-size:.55rem;opacity:.5;cursor:pointer" onclick="event.stopPropagation();unassignSlot('+si+')">✕</div>'+
+      '</div>';
+    }
+    var lbl={K:'Keeper',V:'Verdediger',M:'Middenvelder',A:'Aanvaller'}[s.pos]||s.pos;
+    return '<div class="slot-empty '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')">'+
+      '<div class="slot-plus">+</div><div class="slot-label">'+lbl+'</div></div>';
   }
 
-  const hintEl = document.getElementById('swap-hint');
-  if (hintEl) {
-    hintEl.textContent = selectedPlayer ? '✅ Geselecteerd — klik een andere speler om te wisselen' : 'Klik twee spelers om te wisselen';
-    hintEl.style.color = selectedPlayer ? 'var(--gold)' : 'var(--dim)';
-  }
+  var aSlots=[],mSlots=[],vSlots=[],gkSlots=[];
+  fDef.slots.forEach(function(s,i){
+    if(s.pos==='K')gkSlots.push(i);
+    else if(s.pos==='V')vSlots.push(i);
+    else if(s.pos==='M')mSlots.push(i);
+    else aSlots.push(i);
+  });
+
+  var pitchHtml=[aSlots,mSlots,vSlots,gkSlots].map(function(row){
+    return '<div class="pitch-row">'+row.map(slotCard).join('')+'</div>';
+  }).join('');
+  document.getElementById('pitch').innerHTML=pitchHtml;
+
+  var inLU=myTeam.lineup.filter(Boolean).map(function(p){return p.id;});
+  var allP=(myTeam.starters||[]).concat(myTeam.bench||[]);
+  var pool=allP.filter(function(p){return inLU.indexOf(p.id)<0;});
+  var po={K:0,V:1,M:2,A:3};
+  pool.sort(function(a,b){return (po[a.pos]||0)-(po[b.pos]||0)||b.rating-a.rating;});
+  var selPos=(window._selSlot!==null&&fDef.slots[window._selSlot])?fDef.slots[window._selSlot].pos:null;
+
+  var bHtml='<div class="bench-pool"><div class="bench-pool-title">Bank</div><div class="bench-pool-grid">'+
+    pool.map(function(p){
+      var compat=(selPos===null||p.pos===selPos);
+      var nm=p.name.split(' ').slice(-1)[0];
+      var dim=window._selSlot!==null&&!compat;
+      var cand=window._selSlot!==null&&compat;
+      var cls='pcard '+posClass(p.pos)+(cand?' bench-cand':dim?' bench-dim':'');
+      var fn=cand?'assignFromBench("'+p.id+'")':(!dim?'selectBenchPlayer("'+p.id+'")':'');
+      return '<div class="'+cls+'" onclick="'+fn+'" style="min-width:70px;text-align:center">'+
+        '<div class="prating">'+p.rating+'</div>'+
+        '<div class="pname">'+nm+'</div>'+
+        '<div class="ppos">'+p.pos+'</div>'+
+        '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+p.fitness+'%"></div></div>'+
+      '</div>';
+    }).join('')+
+  '</div></div>';
+  var bEl=document.getElementById('bench-pool-container');
+  if(bEl)bEl.innerHTML=bHtml;
+
+  var hEl=document.getElementById('swap-hint');
+  if(hEl)hEl.textContent=window._selSlot!==null?'Slot geselecteerd — kies speler van de bank':'Klik een slot → dan een speler van de bank';
   renderBaseSubs();
+}
+
+function selectSlot(si){
+  if(window._selSlot===si){window._selSlot=null;}
+  else{window._selSlot=si;}
+  renderOpsteliling();
+}
+function selectBenchPlayer(pid){
+  // If no slot selected, auto-select first empty compatible slot
+  if(!G||!G.teams)return;
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  var formation=G.formation||'433';
+  var fDef=FORMATIONS[formation]||FORMATIONS['433'];
+  var allP=(myTeam.starters||[]).concat(myTeam.bench||[]);
+  var p=allP.find(function(x){return x.id===pid;});
+  if(!p)return;
+  // find first empty slot matching pos
+  var emptySlot=fDef.slots.findIndex(function(s,i){return s.pos===p.pos&&!myTeam.lineup[i];});
+  if(emptySlot>=0){
+    window._selSlot=emptySlot;
+    assignFromBench(pid);
+  }
+}
+function assignFromBench(pid){
+  if(window._selSlot===null)return;
+  if(!G||!G.teams)return;
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  var formation=G.formation||'433';
+  var fDef=FORMATIONS[formation]||FORMATIONS['433'];
+  var allP=(myTeam.starters||[]).concat(myTeam.bench||[]);
+  var p=allP.find(function(x){return x.id===pid;});
+  if(!p)return;
+  var slotPos=fDef.slots[window._selSlot].pos;
+  if(p.pos!==slotPos){window._selSlot=null;renderOpsteliling();return;}
+  myTeam.lineup[window._selSlot]=p;
+  window._selSlot=null;
+  saveGame();
+  renderOpsteliling();
+}
+function unassignSlot(si){
+  if(!G||!G.teams)return;
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  if(!myTeam.lineup)return;
+  myTeam.lineup[si]=null;
+  window._selSlot=null;
+  saveGame();
+  renderOpsteliling();
+}
+function switchFormation(newF){
+  if(!G||!G.teams)return;
+  var myTeam=G.teams.find(function(t){return t.name===G.myName;});
+  if(!myTeam)return;
+  var oldF=G.formation||'433';
+  if(oldF===newF)return;
+  // Save old lineup players back to pool (we'll just clear lineup)
+  G.formation=newF;
+  var fDef=FORMATIONS[newF]||FORMATIONS['433'];
+  myTeam.lineup=Array(fDef.slots.length).fill(null);
+  window._selSlot=null;
+  saveGame();
+  renderOpsteliling();
 }
 
 function renderTransfers(){
@@ -2873,6 +3020,7 @@ async function newSeason() {
     }
     t.starters = applyProg(t.starters);
     t.bench    = applyProg(t.bench);
+      if(t.name===G.myName&&t.lineup){t.lineup=t.lineup.map(function(p){if(!p)return null;var allP=(t.starters||[]).concat(t.bench||[]);var up=allP.find(function(x){return x.id===p.id;});return up||p;});}
   });
 
   // 4. Reset seizoensstatus
@@ -2993,6 +3141,19 @@ function openPreMatch() {
   G.topScorers  = G.topScorers  || {};
 
   const myTeam = G.teams.find(t => t.name === G.myName);
+    // ── Sync lineup slots to starters for match engine ──
+  var _myT=G.teams.find(function(t){return t.name===G.myName;});
+  if(_myT&&_myT.lineup){
+    var filled=_myT.lineup.filter(Boolean);
+    if(filled.length===11){_myT.starters=filled;}
+    else if(filled.length>0){
+      // partial: fill remaining spots with highest-rated bench players
+      var inLU=filled.map(function(p){return p.id;});
+      var bench=(_myT.starters||[]).concat(_myT.bench||[]).filter(function(p){return inLU.indexOf(p.id)<0;});
+      bench.sort(function(a,b){return b.rating-a.rating;});
+      _myT.starters=filled.concat(bench.slice(0,11-filled.length));
+    }
+  }
   G.matchLineup = {
     starters: (function(){var FORM=['GK','V','V','V','V','M','M','M','A','A','A'];return Array.from({length:11},function(_,i){return myTeam.starters[i]?{...myTeam.starters[i]}:{_empty:true,pos:FORM[i]};});}()),
     bench:    myTeam.bench.map(p => ({...p})),
