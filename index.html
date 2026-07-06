@@ -1137,19 +1137,52 @@ async function launchGame(hasSave) {
         return;
       }
     } catch (e) { console.warn('Laden mislukt:', e); }
+    // Probeer lokale back-up als server niets teruggeeft
+    try {
+      const _ls = localStorage.getItem('ffm_gamestate');
+      const localState = _ls ? JSON.parse(_ls) : null;
+      if (localState && localState.myName && (localState.season||0) >= 1) {
+        G = localState;
+        G.league = G.league || 'eredivisie';
+        G.careerId              = G.careerId              || (Date.now().toString(36) + Math.random().toString(36).slice(2));
+        G.history               = G.history               || [];
+        G.basePlannedSubs       = G.basePlannedSubs       || [];
+        G.topScorers            = G.topScorers            || {};
+        G.careerLeaderboardPoints = G.careerLeaderboardPoints || 0;
+        G.completedSeasons      = G.completedSeasons      || 0;
+        G.careerMultiplier      = G.careerMultiplier      || 1;
+        G.scoutAttempts         = G.scoutAttempts         || {};
+        if (!G.schedule || !G.schedule.length) { G.schedule = buildSchedule(G.teams.map(function(t){return t.name;})); G.totalRounds = G.schedule.length; }
+        if (!G.otherSchedule || !G.otherSchedule.length) { G.otherSchedule = buildSchedule((G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return t.name;})); }
+        if (!G.otherStandings  || !G.otherStandings.length)  { G.otherStandings = (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};}); }
+        if (!G.freeAgentsDatabase || !G.freeAgentsDatabase.length) { G.freeAgentsDatabase = generateFreeAgents(); }
+        G.teams.forEach(function(t){ t.form = t.form||[]; [].concat(t.starters||[]).concat(t.bench||[]).forEach(function(p){ if(!p.id) p.id=++_mpid; }); });
+        populateAITeams();
+        renderAll();
+        toast('📂 Lokale back-up geladen. Sla op om te synchroniseren.');
+        showSaveScreen(false);
+        startInactivityTimer();
+        return;
+      }
+    } catch(_e) { console.warn('Lokale back-up laden mislukt:', _e); }
     // Alleen team-select als er echt geen carrière is
     showScreen('lobby');
   });
 }
 async function saveGame() {
-  if (!CURRENT_USER || !G || !G.teams) return;
+  if (!CURRENT_USER) {} // server skip
+  if (!G || !G.teams) return;
   try {
     // Sla een afgeslankte versie op zodat we onder de 1MB body-limiet blijven.
     var slim = Object.assign({}, G, {
-      schedule: null,
+      schedule:      null,
+      otherSchedule: null,
       results:  (G.results  || []).slice(-5),
       market:   (G.market   || []).slice(0, 15),
     });
+    // Lokale back-up — geen netwerk nodig, altijd instant
+    try { localStorage.setItem('ffm_gamestate', JSON.stringify(slim)); } catch(_) {}
+    if (!CURRENT_USER) return;
     var res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
