@@ -1132,9 +1132,7 @@ async function launchGame(hasSave) {
       }
       populateAITeams();
       renderAll();
-        showScreen('main');
-        toast('Welkom terug! 📂 Seizoen '+(G.season||1)+', Ronde '+(G.round||0));
-        startInactivityTimer();
+        showSaveScreen(false);
         return;
       }
     } catch (e) { console.warn('Laden mislukt:', e); }
@@ -1160,9 +1158,7 @@ async function launchGame(hasSave) {
         G.teams.forEach(function(t){ t.form = t.form||[]; [].concat(t.starters||[]).concat(t.bench||[]).forEach(function(p){ if(!p.id) p.id=++_mpid; }); });
         populateAITeams();
         renderAll();
-        showScreen('main');
-        toast('📂 Lokale back-up geladen! Sla op om te synchroniseren.');
-        startInactivityTimer();
+        showSaveScreen(false);
         return;
       }
     } catch(_e) { console.warn('Lokale back-up laden mislukt:', _e); }
