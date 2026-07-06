@@ -452,77 +452,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .game-info-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px 4px;margin-bottom:4px;}
 .game-info-grid span{background:rgba(255,255,255,.06);border-radius:4px;padding:2px 4px;text-align:center;font-size:0.75rem;}
 .game-info-multipliers{display:flex;flex-wrap:wrap;gap:6px;}
-.game-info-multipliers span{background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.3);border-radius:4px;padding:3px 8px;font-size:0.78rem;}
-/* ===== MOBILE RESPONSIVE ===== */
-@media (max-width: 640px) {
-  body { font-size: 0.9rem; }
-  .content { padding: 10px 8px; }
-  .topbar { padding: 8px 10px; gap: 8px; }
-  .card { padding: 14px 10px; }
-  .side-card { padding: 12px 10px; }
-  .next-match-card { padding: 14px 12px; }
-
-  /* Tables */
-  .card table, .side-card table, .content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { font-size: 0.72rem; }
-  table th, table td { padding: 4px 5px; white-space: nowrap; }
-
-  /* Matchup - stack vertically */
-  .matchup { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-
-  /* Modals - bottom sheet */
-  .modal-bg { padding: 0; align-items: flex-end; }
-  .modal { max-width: 100% !important; width: 100% !important; border-radius: 16px 16px 0 0; padding: 20px 16px; max-height: 90vh; }
-
-  /* Pitch/lineup */
-  .pitch-header { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
-  .pcard { min-width: 50px; font-size: 0.62rem; padding: 4px 2px; }
-  .pitch-row { gap: 4px; }
-  .pitch-wrap { margin-bottom: 10px; }
-
-  /* Formation */
-  .formation-wrap { justify-content: center; }
-
-  /* Transfers/scout subtabs */
-  .trx-subtabs { flex-wrap: wrap; }
-  .trx-sub-btn { font-size: 0.78rem; padding: 6px 4px; }
-
-  /* Team select */
-  .team-cards { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-  .team-card { padding: 12px 8px; }
-
-  /* Stat rows */
-  .stat-row { padding: 5px 0; }
-
-  /* Headings */
-  .card h3, .side-card h3 { font-size: 0.85rem; }
-
-  /* Play button */
-  .play-btn { padding: 12px; }
-
-  /* Season end screen */
-  .season-end { padding: 8px 0; }
-
-  /* Lobby */
-  .lobby-panel { max-width: 100%; }
-  .lobby-tabs { gap: 6px; }
-  .lobby-tab { padding: 5px 10px; font-size: 0.78rem; }
-
-  /* Standings scroll */
-  #standings-wrap, #standings-other-wrap { overflow-x: auto; }
-
-  /* Dash grid sidebar full width */
-  .dash-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 400px) {
-  .pcard { min-width: 42px; font-size: 0.58rem; }
-  .pitch-row { gap: 2px; }
-  .team-cards { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-  table { font-size: 0.68rem; }
-  .content { padding: 8px 4px; }
-}
-</style>
+.game-info-multipliers span{background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.3);border-radius:4px;padding:3px 8px;font-size:0.78rem;}</style>
 </head>
 <body>
 
