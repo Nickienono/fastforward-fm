@@ -1839,7 +1839,12 @@ function applyGrowth(myTeam, goalsAgainst) {
     else if (p.pos==='V') { g+=goals*0.10; g+=cleanSheet?0.28:0; }
     else if (p.pos==='GK') { g+=cleanSheet?0.40:0; }
     g=Math.min(g,1.0);
-    p.growthPoints=(p.growthPoints||0)+g;
+ 
+    // Leeftijdsgebaseerde groeimultiplier
+    const _age=p.age||27;
+    const _mult=_age<=19?2.0:_age<=22?1.5:_age<=25?1.0:_age<=28?0.5:_age<=31?0.2:0;
+    g=Math.min(g*_mult,1.0);
+    if(_age>=32&&Math.random()<(_age-31)*0.12){const _fl=Math.max(50,(p.baseRating||p.rating)-8);if(p.rating>_fl){p.rating--;p.value=calculatePlayerValue(p.rating,_age);}}   p.growthPoints=(p.growthPoints||0)+g;
     if (p.growthPoints>=1.0) {
       const cap=Math.min(99,(p.baseRating||p.rating)+10);
       if (p.rating<cap) { p.rating++; p.value=calculatePlayerValue(p.rating, p.age||27); p._justGrew=true; }
