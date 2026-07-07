@@ -2427,7 +2427,6 @@ function renderOpsteliling(){
       var nm=p.name.split(' ').slice(-1)[0];
       return '<div class="pcard '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')" style="min-width:72px;text-align:center">'+
         '<div class="prating">'+p.rating+'</div>'+
-        '<div class="fitness-bar"><div class="fitness-fill" style="width:'+(p.fitness==null?100:p.fitness)+'%;background:'+(p.fitness==null||p.fitness>=70?'#4caf50':p.fitness>=40?'#ff9800':'#f44336')+'"></div></div>'+
         '<div class="pname">'+nm+'</div>'+
         '<div class="ppos">'+p.pos+(p.age?' · '+p.age:'')+'</div>'+
         '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+p.fitness+'%"></div></div>'+
@@ -2468,7 +2467,6 @@ function renderOpsteliling(){
       var fn=cand?'assignFromBench('+p.id+')':(!dim?'selectBenchPlayer('+p.id+')':'');
       return '<div class="'+cls+'" onclick="'+fn+'" style="min-width:70px;text-align:center">'+
         '<div class="prating">'+p.rating+'</div>'+
-        '<div class="fitness-bar"><div class="fitness-fill" style="width:'+(p.fitness==null?100:p.fitness)+'%;background:'+(p.fitness==null||p.fitness>=70?'#4caf50':p.fitness>=40?'#ff9800':'#f44336')+'"></div></div>'+
         '<div class="pname">'+nm+'</div>'+
         '<div class="ppos">'+p.pos+'</div>'+
         '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+p.fitness+'%"></div></div>'+
