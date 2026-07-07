@@ -2606,6 +2606,8 @@ function assignFromBench(pid){
   var slotPos=fDef.slots[window._selSlot].pos;
   if(p.pos!==slotPos){window._selSlot=null;renderOpsteliling();return;}
   myTeam.lineup[window._selSlot]=p;
+  myTeam.bench=(myTeam.bench||[]).filter(function(b){return b.id!==p.id;});
+  myTeam.starters=(myTeam.starters||[]).filter(function(s){return s.id!==p.id;});
   window._selSlot=null;
   saveGame();
   renderOpsteliling();
