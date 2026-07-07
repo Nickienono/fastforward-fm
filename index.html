@@ -3021,7 +3021,7 @@ async function newSeason() {
       t.bench.forEach(function(p){if(p)p.fitness=100;});
       var _td=LOADED_TEAMS.find(function(d){return d.name===t.name;});
       var _tier=_td?(_td.tier||70):70;
-      while(t.starters.length<11){var _pos=['V','V','M','M','A','A','K'];var _ap=_pos[ri(0,_pos.length-1)];var _ar=Math.max(50,Math.min(95,_tier+ri(-8,5)));t.starters.push({id:++_pid,name:randomName(),pos:_ap,rating:_ar,fitness:100,value:calcValue(_ar),age:ri(18,27)});}
+      while(t.starters.length<11){var _hasGK=t.starters.some(function(p){return p&&p.pos==='K';});var _pos=_hasGK?['V','V','M','M','A','A']:['K'];var _ap=_pos[ri(0,_pos.length-1)];var _ar=Math.max(50,Math.min(95,_tier+ri(-8,5)));t.starters.push({id:++_pid,name:randomName(),pos:_ap,rating:_ar,fitness:100,value:calcValue(_ar),age:ri(18,27)});}
       while(t.bench.length<4){var _pos2=['V','M','A','K'];var _bp=_pos2[t.bench.length%4];var _br=Math.max(50,Math.min(95,_tier+ri(-10,3)));t.bench.push({id:++_pid,name:randomName(),pos:_bp,rating:_br,fitness:100,value:calcValue(_br),age:ri(18,27)});}
     }
   });
