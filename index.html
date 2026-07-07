@@ -1056,6 +1056,8 @@ async function launchGame(hasSave) {
       if (gameState && gameState.myName && (gameState.season||0) >= 1) {
         G = gameState;
         G.league=G.league||'eredivisie';
+        // Fix: Firebase RTDB strips null array entries → restore lineup arrays
+        if(G.teams){G.teams.forEach(function(t){if(t.lineup&&!Array.isArray(t.lineup)){var _fD=FORMATIONS[G.formation]||FORMATIONS['433'];var _r=Array(_fD.slots.length).fill(null);Object.keys(t.lineup).forEach(function(k){var _i=parseInt(k,10);if(!isNaN(_i)&&_i<_r.length)_r[_i]=t.lineup[k]||null;});t.lineup=_r;}});}
         if(G.league==='kkd'){LOADED_TEAMS=KKD_BUILTIN.teams.map(function(t){return Object.assign({},t,{fullName:t.fullName||t.name,allPlayers:(t.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});});}
         // Velden initialiseren die ontbreken in oude saves
         G.careerId                = G.careerId                || (Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -2403,7 +2405,13 @@ function renderOpsteliling(){
   if(!myTeam)return;
   var formation=G.formation||'433';
   var fDef=FORMATIONS[formation]||FORMATIONS['433'];
-  if(!myTeam.lineup||myTeam.lineup.length!==fDef.slots.length){
+  if(!myTeam.lineup){
+    myTeam.lineup=Array(fDef.slots.length).fill(null);
+  }else if(!Array.isArray(myTeam.lineup)){
+    var _r=Array(fDef.slots.length).fill(null);
+    Object.keys(myTeam.lineup).forEach(function(k){var _i=parseInt(k,10);if(!isNaN(_i)&&_i<_r.length)_r[_i]=myTeam.lineup[k]||null;});
+    myTeam.lineup=_r;
+  }else if(myTeam.lineup.length!==fDef.slots.length){
     myTeam.lineup=Array(fDef.slots.length).fill(null);
   }
   var sel=document.getElementById('formation-select');
@@ -2718,6 +2726,8 @@ function sellPlayer(id){
   if(fromArr===myTeam.starters){var bench=myTeam.bench||[];var benchIdx=bench.findIndex(function(b){return b.pos===player.pos&&!b._empty;});if(benchIdx>=0){var sub=bench.splice(benchIdx,1)[0];myTeam.starters.splice(idx,0,sub);}else{myTeam.starters.splice(idx,0,{_empty:true,pos:player.pos});}}
   myTeam.budget=(myTeam.budget||0)+price;
   G.transfersThisSeason=(G.transfersThisSeason||0)+1;
+  // Verwijder verkochte speler uit opstelling
+  if(myTeam.lineup){myTeam.lineup=myTeam.lineup.map(function(p){return(p&&p.id===id)?null:p;});}
   toast('✅ '+player.name+' verkocht voor '+fmtMoney(price)+'!');
   saveGame();
   renderSellTab();
