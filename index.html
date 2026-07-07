@@ -590,7 +590,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
       <img id="top-logo" src="/Fast%20Forward%20FM%20-%20logo%20v2.png" alt="FFFM" style="height:28px;border-radius:4px" onerror="this.style.display='none'">
       <span id="top-club">–</span>
     </div>
-    <div class="stat">💰 <b id="top-budget">–</b></div>
+    
     <div class="stat">👤 <b id="top-username">Gast</b></div>
     <div class="stat">📊 <b id="top-pos">–</b>e</div>
     <div class="round">Ronde <b id="top-round">0</b>/<span id="top-round-total">34</span></div>
@@ -2309,7 +2309,6 @@ function updateTopBar() {
 
   if (myTeam) {
     document.getElementById('top-club').textContent = G.myName;
-    var _be = document.getElementById('top-budget'); if (_be) _be.textContent = fmtMoney(myTeam ? myTeam.budget : 0);
   }}
 
 function getSorted() {
@@ -2524,8 +2523,7 @@ function renderOpsteliling(){
         '<div style="font-size:.55rem;opacity:.5;cursor:pointer" onclick="event.stopPropagation();unassignSlot('+si+')">✕</div>'+
       '</div>';
     }
-    var lbl={GK:'Keeper',K:'Keeper',V:'Verdediger',M:'Middenvelder',A:'Aanvaller'}[s.pos]||s.pos;
-    return '<div class="slot-empty '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')">'+
+    var lbl='+ Kies '+({GK:'GK',K:'GK',V:'V',M:'M',A:'A'}[s.pos]||s.pos);    return '<div class="slot-empty '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')">'+
       '<div class="slot-plus">+</div><div class="slot-label">'+lbl+'</div></div>';
   }
 
@@ -3000,6 +2998,7 @@ function calcPlayerValue(rating, age) {
 }
 
 async function newSeason() {
+  if(G.completedSeasons>=10){toast('🏆 Max. 10 seizoenen bereikt! Je piek-score is vergrendeld.');return;}
   // ── 0. Bereken leaderboard-punten voor dit seizoen ──
   var _lbPts = calcLeaderboardPoints();
   // ── Leaderboard cap: max 10 seizoenen ──
