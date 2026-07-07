@@ -230,6 +230,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 .pos-badge.pos-def { background:var(--pos-def); color:#fff; }
 .pos-badge.pos-gk  { background:var(--pos-gk);  color:#fff; }
 .fitness-bar  { height: 3px; background: rgba(255,255,255,.1); border-radius: 2px; margin-top: 5px; }
+.fitness-fill { height:100%; border-radius:2px; transition:width .3s ease; }
 .fitness-fill { height: 100%; border-radius: 2px; transition: width .3s; }
 .fitness-fill.hi  { background: #4ade80; }
 .fitness-fill.mid { background: var(--gold); }
@@ -1734,7 +1735,7 @@ function buildSchedule(names) {
 //  MATCH ENGINE
 // ══════════════════════════════════════════════════
 
-function effectiveRating(p) { return p.rating * (0.55 + p.fitness / 222); }
+function effectiveRating(p) { var f=p.fitness==null?100:Math.max(0,Math.min(100,p.fitness)); return (p.rating||p.rat||70) * (0.5 + f / 200); }
 
 function teamAttack(team)  { return avg(team.starters.filter(p => (p.pos==='A'||p.pos==='M')&&!p._empty).map(effectiveRating)); }
 function teamDefense(team) { return avg(team.starters.filter(p => (p.pos==='V'||p.pos==='GK')&&!p._empty).map(effectiveRating)); }
@@ -1746,11 +1747,26 @@ function poissonSample(lambda) {
   return g;
 }
 
+function calcTeamPower(team, useLineup) {
+  var pool = useLineup && team.lineup ? (team.lineup||[]).filter(Boolean) : (team.starters||[]);
+  pool = pool.filter(function(p){return p&&!p._empty;});
+  if(!pool.length) pool = (team.starters||[]).filter(function(p){return p&&!p._empty;});
+  var fMul = function(f){return 0.5+Math.max(0,Math.min(100,f==null?100:f))/200;};
+  var rat  = function(p){return (p.rating||p.rat||70)*fMul(p.fitness);};
+  var atk  = pool.filter(function(p){return p.pos==='A'||p.pos==='M';}).map(rat);
+  var def  = pool.filter(function(p){return p.pos==='V'||p.pos==='GK';}).map(rat);
+  var aFn  = function(a){return a.length?a.reduce(function(s,v){return s+v;},0)/a.length:65;};
+  return { atk: aFn(atk), def: aFn(def) };
+}
 function simulateMatch(homeTeam, awayTeam) {
   const HOME_ADV = 3;
   const _fMod={'424':0.35,'433':0,'532':-0.3}[G.formation]||0;
-  const hExp = clamp((teamAttack(homeTeam) + HOME_ADV - teamDefense(awayTeam)) / 18 + 1.1 + _fMod, 0.25, 4.0);
-  const aExp = clamp((teamAttack(awayTeam) - teamDefense(homeTeam)) / 18 + 0.85 + _fMod, 0.25, 4.0);
+  const myIsHome = homeTeam.name===G.myName;
+  const myIsAway = awayTeam.name===G.myName;
+  const hPow = calcTeamPower(homeTeam, myIsHome);
+  const aPow = calcTeamPower(awayTeam, myIsAway);
+  const hExp = clamp((hPow.atk + HOME_ADV - aPow.def) / 18 + 1.1 + _fMod, 0.25, 4.0);
+  const aExp = clamp((aPow.atk - hPow.def) / 18 + 0.85 + _fMod, 0.25, 4.0);
   return { homeGoals: poissonSample(hExp), awayGoals: poissonSample(aExp) };
 }
 
@@ -2517,6 +2533,7 @@ function renderOpsteliling(){
       var nm=p.name.split(' ').slice(-1)[0];
       return '<div class="pcard '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')" style="min-width:72px;text-align:center">'+
         '<div class="prating">'+p.rating+'</div>'+
+        '<div class="fitness-bar"><div class="fitness-fill" style="width:'+(p.fitness==null?100:p.fitness)+'%;background:'+(p.fitness==null||p.fitness>=70?'#4caf50':p.fitness>=40?'#ff9800':'#f44336')+'"></div></div>'+
         '<div class="pname">'+nm+'</div>'+
         '<div class="ppos">'+p.pos+(p.age?' · '+p.age:'')+'</div>'+
         '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+p.fitness+'%"></div></div>'+
@@ -2557,6 +2574,7 @@ function renderOpsteliling(){
       var fn=cand?'assignFromBench('+p.id+')':(!dim?'selectBenchPlayer('+p.id+')':'');
       return '<div class="'+cls+'" onclick="'+fn+'" style="min-width:70px;text-align:center">'+
         '<div class="prating">'+p.rating+'</div>'+
+        '<div class="fitness-bar"><div class="fitness-fill" style="width:'+(p.fitness==null?100:p.fitness)+'%;background:'+(p.fitness==null||p.fitness>=70?'#4caf50':p.fitness>=40?'#ff9800':'#f44336')+'"></div></div>'+
         '<div class="pname">'+nm+'</div>'+
         '<div class="ppos">'+p.pos+'</div>'+
         '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+p.fitness+'%"></div></div>'+
