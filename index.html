@@ -2639,7 +2639,14 @@ function switchFormation(newF){
   if(!myTeam)return;
   var oldF=G.formation||'433';
   if(oldF===newF)return;
-  // Save old lineup players back to pool (we'll just clear lineup)
+  // Zet alle spelers uit de huidige lineup terug naar de bank
+  (myTeam.lineup||[]).forEach(function(p){
+    if(p&&!p._empty){
+      myTeam.bench=myTeam.bench||[];
+      if(!myTeam.bench.find(function(b){return b.id===p.id;}))
+        myTeam.bench.push(p);
+    }
+  });
   G.formation=newF;
   var fDef=FORMATIONS[newF]||FORMATIONS['433'];
   myTeam.lineup=Array(fDef.slots.length).fill(null);
