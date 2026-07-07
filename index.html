@@ -526,31 +526,29 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
 
 <!-- ══ TEAM SELECT ══ -->
 <div id="screen-lobby" class="screen" style="display:none">
-  <h2 style="margin-bottom:16px;">⚽ FastForward FM</h2>
-  <div class="lobby-tabs">
-    <button class="lobby-tab active" onclick="switchLobbyTab('updates',this)">🆕 Updates</button>
-    <button class="lobby-tab" onclick="switchLobbyTab('regels',this)">📋 Spelregels</button>
-    <button class="lobby-tab" onclick="switchLobbyTab('leaderboard',this)">🏆 Leaderboard</button>
+  <h2 style="margin-bottom:12px;">⚽ FastForward FM</h2>
+  <div class="game-info-block">
+    <div class="game-info-title">🎮 Speluitleg</div>
+    <p style="color:var(--dim);margin:0 0 10px;font-size:0.82rem">Scoor zoveel mogelijk punten in 10 seizoenen.</p>
+    <div class="game-info-section">🏆 Eredivisie</div>
+    <div style="font-size:0.8rem;color:var(--dim);margin-bottom:8px">1e: 1000 pt &nbsp;·&nbsp; 10e: 100 pt &nbsp;(−100 per positie)</div>
+    <div class="game-info-section">🥈 KKD</div>
+    <div style="font-size:0.8rem;color:var(--dim);margin-bottom:8px">1e: 500 pt &nbsp;·&nbsp; 10e: 50 pt &nbsp;(−50 per positie)</div>
+    <div class="game-info-section">⬆️ Promotie &nbsp;/&nbsp; ⬇️ Degradatie</div>
+    <div style="font-size:0.8rem;color:var(--dim);margin-bottom:8px">Promoveren: <strong style="color:#4caf50">+1000 pt</strong> &nbsp;|&nbsp; Degraderen: <strong style="color:#f44336">−1000 pt</strong></div>
+    <div class="game-info-section">⚽ Topscorer</div>
+    <div style="font-size:0.8rem;color:var(--dim)">1e: 100 pt &nbsp;·&nbsp; 10e: 10 pt &nbsp;(−10 per positie)</div>
   </div>
-  <div id="lobby-updates" class="lobby-panel">
+  <div id="lobby-updates" class="lobby-panel" style="margin-top:10px">
     <div class="lobby-update-item"><span class="update-badge">3.0</span><div><b>KKD 2026 - 2027 teams &amp; selectie toegevoegd</b></div></div>
     <div class="lobby-update-item"><span class="update-badge">3.1</span><div><b>Nieuwe opstellingen toegevoegd</b><p>433, 424 &amp; 532</p></div></div>
     <div class="lobby-update-item"><span class="update-badge">3.2</span><div><b>COMING SOON: Eredivisie 2026 - 2027 selecties</b></div></div>
-    <div class="lobby-update-item"><span class="update-badge">4.0</span><div><b>Nieuwe matchmaking</b><p>Conditie &amp; rating beïnvloeden nu de wedstrijd</p></div></div>
+    <div class="lobby-update-item"><span class="update-badge">4.0</span><div><b>Nieuwe matchmaking</b><p>Conditie &amp; rating beinvloeden nu de wedstrijd</p></div></div>
   </div>
-  <div id="lobby-regels" class="lobby-panel" style="display:none">
-    <ul class="rules-list">
-      <li>Kies een club en speel maximaal 10 seizoenen</li>
-      <li>Verdien punten op basis van eindpositie × clubmultiplier</li>
-      <li>Moeilijkere clubs geven een hogere score-multiplier</li>
-      <li>KKD top 2 promoveert naar de Eredivisie</li>
-      <li>Eredivisie laatste 2 degraderen naar de KKD</li>
-      <li>Na 10 seizoenen wordt je score opgeslagen</li>
-    </ul>
-  </div>
-  <div id="lobby-leaderboard" class="lobby-panel" style="display:none">
-    <div id="lobby-lb-content" style="padding:12px 0;color:var(--dim);">Laden...</div>
-  </div>
+  <div id="lobby-leaderboard" class="lobby-panel" style="margin-top:10px">
+    <div style="font-size:0.78rem;color:var(--dim);margin-bottom:6px;font-weight:600;letter-spacing:.04em">🏆 LEADERBOARD</div>
+    <div id="lobby-lb-content" style="padding:4px 0;color:var(--dim);">Laden...</div>
+  </div></div>
   <button style="margin-top:24px;font-size:1.1rem;padding:14px 32px;background:var(--gold);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;" onclick="showCountrySelect()">⚽ Nieuwe Carrière →</button>
 </div>
 <div id="screen-select" class="screen">
