@@ -2166,7 +2166,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
     renderTransfers();
     return;
   }
-  var chance=factor>=1.0?1.0:factor>=0.75?0.75:factor>=0.55?0.50:0.25;
+  var chance=factor>=1.20?0.98:factor>=1.00?0.90:factor>=0.85?0.55:0.20;
   if(!sourceTeam){
     if(player.attemptsLeft===undefined)player.attemptsLeft=8;
     player.attemptsLeft=Math.max(0,player.attemptsLeft-1);
@@ -2725,7 +2725,6 @@ function sellPlayer(id){
   fromArr.splice(idx,1);
   if(fromArr===myTeam.starters){var bench=myTeam.bench||[];var benchIdx=bench.findIndex(function(b){return b.pos===player.pos&&!b._empty;});if(benchIdx>=0){var sub=bench.splice(benchIdx,1)[0];myTeam.starters.splice(idx,0,sub);}else{myTeam.starters.splice(idx,0,{_empty:true,pos:player.pos});}}
   myTeam.budget=(myTeam.budget||0)+price;
-  G.transfersThisSeason=(G.transfersThisSeason||0)+1;
   // Verwijder verkochte speler uit opstelling
   if(myTeam.lineup){myTeam.lineup=myTeam.lineup.map(function(p){return(p&&p.id===id)?null:p;});}
   toast('✅ '+player.name+' verkocht voor '+fmtMoney(price)+'!');
