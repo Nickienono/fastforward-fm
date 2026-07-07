@@ -1972,6 +1972,7 @@ function playNextMatch() {
   renderAll(); saveGame();
   if (myResult) showResult(myResult);
   if (G.round>=G.totalRounds && !myResult) showSeasonEnd();
+  saveGame();
 }
 
 // ══════════════════════════════════════════════════
@@ -2058,52 +2059,6 @@ function refreshMarket(){
 
 function buyPlayer(pid) { openNegotiation(pid, null); }
 
-function sellPlayer(pid) {
-  const myTeam = G.teams.find(t => t.name === G.myName);
-  let idx = myTeam.bench.findIndex(p => p.id === pid);
-  let fromBench = true;
-  if (idx < 0) { idx = myTeam.starters.findIndex(p => p.id === pid); fromBench = false; }
-  if (idx < 0) return;
-  const arr = fromBench ? myTeam.bench : myTeam.starters;
-  const p   = arr[idx];
-  const total = myTeam.starters.length + myTeam.bench.length;
-  if (total <= 11) { toast('Selectie te klein om te verkopen!'); return; }
-  if (!fromBench && myTeam.bench.length === 0) { toast('Geen wisselspeler beschikbaar!'); return; }
-  // ── Zoek AI-club die de speler kan kopen ──
-  const _aiCandidates = G.teams.filter(t => !t.isMe && (t.budget||0) >= p.value);
-  _aiCandidates.sort((a,b) => b.budget - a.budget);
-  if (_aiCandidates.length > 0) {
-    const _buyer = _aiCandidates[0];
-    _buyer.budget  -= p.value;
-    p.team          = _buyer.name;
-    p.goals         = 0; p.assists = 0;
-    if (!_buyer.bench) _buyer.bench = [];
-    _buyer.bench.push(p);
-    myTeam.budget  += p.value;
-    toast('✅ ' + p.name + ' verkocht aan ' + _buyer.name + ' voor €' + (p.value/1e6).toFixed(1) + 'M!');
-  } else {
-    myTeam.budget  += p.value;
-    toast('✅ ' + p.name + ' verkocht (geen club kon betalen) voor €' + (p.value/1e6).toFixed(1) + 'M.');
-  }
-  arr.splice(idx, 1);
-  if (!fromBench) {
-    const subIdx = myTeam.bench.findIndex(b => b.pos === p.pos);
-    if (subIdx >= 0) {
-      const sub = myTeam.bench.splice(subIdx, 1)[0];
-      myTeam.starters.splice(idx, 0, sub);
-      toast(`${p.name} verkocht. ${sub.name} in de basis (${p.pos}).`);
-    } else {
-      myTeam.starters.splice(idx, 0, {_empty:true, pos:p.pos});
-      toast(`${p.name} verkocht. Geen wisselaar voor positie ${p.pos}.`);
-    }
-  } else {
-    toast(`${p.name} verkocht voor ${fmtMoney(p.value)}.`);
-  }
-    G.market.push({ ...p, club: 'Vrije agent', age: p.age || (Math.floor(Math.random()*24)+17) });
-  renderAll();
-  saveGame();
-}
-
 // ══════════════════════════════════════════════════
 //  SWAP (OPSTELLING)
 // ══════════════════════════════════════════════════
@@ -2127,49 +2082,6 @@ function selectPlayer(from, idx) {
     selectedPlayer = null; saveGame(); toast('\u2705 Spelers gewisseld!');
   } else {
     selectedPlayer = { from, idx };
-  }
-  renderOpsteliling();
-}
-function _oldSelectPitchPlayer(idx) {
-  if (selectedPlayer && selectedPlayer.from==='pitch' && selectedPlayer.idx===idx) {
-    selectedPlayer = null; renderOpsteliling(); return;
-  }
-  if (selectedPlayer) {
-    const myTeam = G.teams.find(t => t.name === G.myName);
-    if (selectedPlayer.from === 'bench') {
-      [myTeam.starters[idx], myTeam.bench[selectedPlayer.idx]] =
-       [myTeam.bench[selectedPlayer.idx], myTeam.starters[idx]];
-    } else {
-      [myTeam.starters[idx], myTeam.starters[selectedPlayer.idx]] =
-       [myTeam.starters[selectedPlayer.idx], myTeam.starters[idx]];
-    }
-    selectedPlayer = null;
-    saveGame();
-    toast('Spelers gewisseld!');
-  } else {
-    selectedPlayer = { from: 'pitch', idx };
-  }
-  renderOpsteliling();
-}
-
-function selectBenchPlayer(idx) {
-  if (selectedPlayer && selectedPlayer.from==='bench' && selectedPlayer.idx===idx) {
-    selectedPlayer = null; renderOpsteliling(); return;
-  }
-  if (selectedPlayer) {
-    const myTeam = G.teams.find(t => t.name === G.myName);
-    if (selectedPlayer.from === 'pitch') {
-      [myTeam.starters[selectedPlayer.idx], myTeam.bench[idx]] =
-       [myTeam.bench[idx], myTeam.starters[selectedPlayer.idx]];
-    } else {
-      [myTeam.bench[idx], myTeam.bench[selectedPlayer.idx]] =
-       [myTeam.bench[selectedPlayer.idx], myTeam.bench[idx]];
-    }
-    selectedPlayer = null;
-    saveGame();
-    toast('Gewisseld!');
-  } else {
-    selectedPlayer = { from: 'bench', idx };
   }
   renderOpsteliling();
 }
