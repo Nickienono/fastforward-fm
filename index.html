@@ -3410,7 +3410,10 @@ function renderTopScorers() {
     const data = await res.json();
     setLoginBusy(false);
     if (!res.ok) {
-      // Auto-login mislukt — laat gebruiker handmatig inloggen
+      // Auto-login mislukt — wis opgeslagen sessie + toon melding
+      localStorage.removeItem('ffm_user');
+      document.getElementById('inp-tag').value = '';
+      showLoginErr('Account niet gevonden. Laat het tag-veld leeg om opnieuw te beginnen.');
       return;
     }
     CURRENT_USER = { username: data.username, tag: data.tag };
