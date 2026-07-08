@@ -2522,6 +2522,11 @@ function assignFromBench(pid){
   myTeam.starters=(myTeam.starters||[]).filter(function(s){return s.id!==p.id;});
   myTeam.starters=(myTeam.starters||[]).concat([p]);
   window._selSlot=null;
+  if(G.matchLineup){
+    G.matchLineup.starters=(myTeam.lineup||[]).map(function(p){return p&&!p._empty?Object.assign({},p):{_empty:true};});
+    G.matchLineup.bench=(myTeam.bench||[]).map(function(p){return Object.assign({},p);});
+    renderPreMatch();
+  }
   saveGame();
   renderOpsteliling();
 }
