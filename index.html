@@ -1048,7 +1048,9 @@ function showLeagueSelect(c){
 }
 async function launchGame(hasSave) {
   showScreen('loading');
+  let _safetyTimer = setTimeout(() => { showScreen('login'); showLoginErr('Laden mislukt. Controleer je verbinding en probeer opnieuw.'); }, 25000);
   await loadEredivisieData(async () => {
+    clearTimeout(_safetyTimer);
     // ── Carrière lock: altijd proberen te laden, nooit naar teamselect als carrière bestaat ──
     try {
       const res = await fetch(`/api/load?username=${encodeURIComponent(CURRENT_USER.username)}&tag=${encodeURIComponent(CURRENT_USER.tag)}`);
