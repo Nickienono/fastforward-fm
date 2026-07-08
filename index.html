@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -2469,6 +2469,7 @@ function renderOpsteliling(){
         '<div class="prating">'+p.rating+'</div>'+
         '<div class="pname">'+nm+'</div>'+
         '<div class="ppos">'+p.pos+'</div>'+
+        '<div class="fitness-bar"><div class="fitness-fill '+fitColor(p.fitness)+'" style="width:'+(p.fitness||100)+'%"></div></div>'+
       '</div>';
     }).join('')+
   '</div></div>';
@@ -2514,9 +2515,12 @@ function assignFromBench(pid){
   if(!p)return;
   var slotPos=fDef.slots[window._selSlot].pos;
   if(p.pos!==slotPos){window._selSlot=null;renderOpsteliling();return;}
+  var oldP=myTeam.lineup[window._selSlot];
+  if(oldP&&oldP.id!==p.id){myTeam.starters=(myTeam.starters||[]).filter(function(s){return s.id!==oldP.id;});if(!(myTeam.bench||[]).find(function(b){return b.id===oldP.id;})){myTeam.bench=(myTeam.bench||[]).concat([oldP]);}}
   myTeam.lineup[window._selSlot]=p;
   myTeam.bench=(myTeam.bench||[]).filter(function(b){return b.id!==p.id;});
   myTeam.starters=(myTeam.starters||[]).filter(function(s){return s.id!==p.id;});
+  myTeam.starters=(myTeam.starters||[]).concat([p]);
   window._selSlot=null;
   saveGame();
   renderOpsteliling();
