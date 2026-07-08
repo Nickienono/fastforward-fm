@@ -1826,7 +1826,7 @@ function generateMatchEvents(team, goalsScored) {
 
 function applyGrowth(myTeam, goalsAgainst) {
   const cleanSheet = goalsAgainst===0;
-  myTeam.starters.filter(p=>p._played).forEach(p => {
+  [...myTeam.starters, ...myTeam.bench].filter(p=>p._played).forEach(p => {
     const goals=p._matchGoals||0, assists=p._matchAssists||0;
     let g=0;
     if      (p.pos==='A') { g+=goals*0.35; g+=assists*0.12; }
@@ -2211,7 +2211,7 @@ function updateTopBar() {
   document.getElementById('top-username').textContent = CURRENT_USER ? CURRENT_USER.username : 'Gast';
   const sorted = getSorted();
   document.getElementById('top-pos').textContent = sorted.findIndex(t => t.name === G.myName) + 1;
-  document.getElementById('top-round').textContent = G.round;
+  document.getElementById('top-round').textContent = Math.min(G.round + 1, G.totalRounds || 34);
 
   if (myTeam) {
     document.getElementById('top-club').textContent = G.myName;
@@ -3062,6 +3062,7 @@ async function newSeason() {
     }
   })();
   G.schedule    = buildSchedule(G.teams.map(t => t.name));
+  G.otherStandings = (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
   G.totalRounds = G.schedule.length;
   G.market      = generateMarket();
   await saveGame();
@@ -3070,6 +3071,7 @@ async function newSeason() {
   renderStandings();
   const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
     await pushLeaderboard();
+  await loadLeaderboard('save-lb-list');
   toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts.total + ' LB punten 🏆');
   await saveGame();
 }
