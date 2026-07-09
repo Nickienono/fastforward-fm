@@ -3049,7 +3049,7 @@ async function newSeason() {
       G.careerPoints=(G.careerPoints||0)+500;
       var _mkNt=function(d,n){var sq=buildSquad({allPlayers:(d.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});return {name:n||d.name,imageUrl:d.imageUrl||'',primaryColor:d.primaryColor||'#333',isMe:false,starters:sq.starters,bench:sq.bench,budget:d.budget||1000000,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]};};
       var _relegNames=(_prevOtherSorted.length>=2?_prevOtherSorted:EREDIVISIE_BUILTIN.teams).slice(-2).map(function(t){return t.name;});
-      var nt=EREDIVISIE_BUILTIN.teams.filter(function(d){return _relegNames.indexOf(d.name)<0;}).map(function(d){return _mkNt(d);});
+      var _ereSrc=(_prevOtherSorted.length>=2?_prevOtherSorted:EREDIVISIE_BUILTIN.teams);var nt=_ereSrc.filter(function(t){return _relegNames.indexOf(t.name)<0;}).map(function(t){var d=EREDIVISIE_BUILTIN.teams.find(function(b){return b.name===t.name;})||LOADED_TEAMS.find(function(b){return b.name===t.name;})||{allPlayers:[],tier:75,budget:2000000,imageUrl:'',primaryColor:'#333'};return _mkNt(d,t.name);});
       var _sec2=standings.slice(1).find(function(t){return t.name.indexOf('Jong')<0&&!t.isMe;})||standings[1];var _sec2D=LOADED_TEAMS.find(function(t){return t.name===_sec2.name;})||KKD_BUILTIN.teams.find(function(t){return t.name===_sec2.name;})||{allPlayers:[],tier:70,budget:1000000,imageUrl:'',primaryColor:'#555'};
       nt.push(_mkNt(_sec2D,_sec2.name));
       nt.push(Object.assign({},mt,{isMe:true,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]}));
