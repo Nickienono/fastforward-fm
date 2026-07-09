@@ -2936,8 +2936,9 @@ async function newSeason() {
   // ── Leaderboard cap: max 10 seizoenen ──
   if ((G.completedSeasons || 0) < 10) {
     const _mult = G.careerMultiplier || 1;
-    G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + Math.round(_lbPts.total * _mult);
-    if (_lbPts.rank === 0) G.championsCount = (G.championsCount || 0) + 1;
+    G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + Math.round(_lbPts * _mult);
+    const _myRank = G.teams.slice().sort((a,b)=>b.points-a.points).findIndex(t=>t.name===G.myName);
+    if (_myRank === 0) G.championsCount = (G.championsCount || 0) + 1;
   }
   G.completedSeasons        = (G.completedSeasons || 0) + 1;
 
@@ -3075,7 +3076,7 @@ async function newSeason() {
   const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
     await pushLeaderboard();
   await loadLeaderboard('save-lb-list');
-  toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts.total + ' LB punten 🏆');
+  toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts + ' LB punten 🏆');
   await saveGame();
 }
 
