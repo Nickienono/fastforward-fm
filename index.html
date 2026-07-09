@@ -3014,9 +3014,11 @@ async function newSeason() {
   G.season++;
   G.round   = 0;
   G.results = [];
+  var _prevOtherSorted=(G.otherStandings||[]).slice().sort(function(a,b){return b.points-a.points;});
   G.otherRound = 0;
-  G.otherSchedule = buildSchedule((G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return t.name;}));
-  G.otherStandings = (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
+  var _defOtherNames=_prevOtherSorted.length?_prevOtherSorted.map(function(t){return t.name;}):(G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return t.name;});
+  G.otherSchedule = buildSchedule(_defOtherNames);
+  G.otherStandings = _defOtherNames.map(function(n){return {name:n,rating:70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
   G.plannedSubs = null;
   G.matchLineup = null;
   G.topScorers  = {};
@@ -3053,6 +3055,9 @@ async function newSeason() {
       G.teams=nt;
       LOADED_TEAMS=EREDIVISIE_BUILTIN.teams.map(function(t){return Object.assign({},t,{fullName:t.fullName||t.name,allPlayers:(t.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});});
       alert('Gefeliciteerd! Je promoveert naar de Eredivisie! (+500 punten)');
+      var _newKKD=standings.slice(2).map(function(t){return t.name;}).concat((_prevOtherSorted.length>=2?_prevOtherSorted:EREDIVISIE_BUILTIN.teams).slice(-2).map(function(t){return t.name;}));
+      G.otherSchedule=buildSchedule(_newKKD);
+      G.otherStandings=_newKKD.map(function(n){return {name:n,rating:70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
     }else if(G.league==='eredivisie'&&myRank>=G.teams.length-1){
       G.league='kkd';
       G.careerPoints=(G.careerPoints||0)-500;
@@ -3064,10 +3069,12 @@ async function newSeason() {
       G.teams=nt2;
       LOADED_TEAMS=KKD_BUILTIN.teams.map(function(t){return Object.assign({},t,{fullName:t.fullName||t.name,allPlayers:(t.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});});
       alert('Je degradeert naar de Keuken Kampioen Divisie! (-500 punten)');
+      var _newEre=standings.slice(0,standings.length-2).map(function(t){return t.name;}).concat((_prevOtherSorted.length>=2?_prevOtherSorted:KKD_BUILTIN.teams).slice(0,2).map(function(t){return t.name;}));
+      G.otherSchedule=buildSchedule(_newEre);
+      G.otherStandings=_newEre.map(function(n){return {name:n,rating:70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
     }
   })();
   G.schedule    = buildSchedule(G.teams.map(t => t.name));
-  G.otherStandings = (G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN).teams.map(function(t){return {name:t.name,rating:t.rating||t.tier||70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
   G.totalRounds = G.schedule.length;
   G.market      = generateMarket();
   await saveGame();
