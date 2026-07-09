@@ -3050,7 +3050,7 @@ async function newSeason() {
       var _mkNt=function(d,n){var sq=buildSquad({allPlayers:(d.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});return {name:n||d.name,imageUrl:d.imageUrl||'',primaryColor:d.primaryColor||'#333',isMe:false,starters:sq.starters,bench:sq.bench,budget:d.budget||1000000,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]};};
       var _relegNames=(_prevOtherSorted.length>=2?_prevOtherSorted:EREDIVISIE_BUILTIN.teams).slice(-2).map(function(t){return t.name;});
       var nt=EREDIVISIE_BUILTIN.teams.filter(function(d){return _relegNames.indexOf(d.name)<0;}).map(function(d){return _mkNt(d);});
-      var _sec2=standings[1];var _sec2D=LOADED_TEAMS.find(function(t){return t.name===_sec2.name;})||KKD_BUILTIN.teams.find(function(t){return t.name===_sec2.name;})||{allPlayers:[],tier:70,budget:1000000,imageUrl:'',primaryColor:'#555'};
+      var _sec2=standings.slice(1).find(function(t){return t.name.indexOf('Jong')<0&&!t.isMe;})||standings[1];var _sec2D=LOADED_TEAMS.find(function(t){return t.name===_sec2.name;})||KKD_BUILTIN.teams.find(function(t){return t.name===_sec2.name;})||{allPlayers:[],tier:70,budget:1000000,imageUrl:'',primaryColor:'#555'};
       nt.push(_mkNt(_sec2D,_sec2.name));
       nt.push(Object.assign({},mt,{isMe:true,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]}));
       G.teams=nt;
@@ -3063,15 +3063,16 @@ async function newSeason() {
       G.league='kkd';
       G.careerPoints=(G.careerPoints||0)-500;
       var _mkNt2=function(d,n){var sq=buildSquad({allPlayers:(d.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});return {name:n||d.name,imageUrl:d.imageUrl||'',primaryColor:d.primaryColor||'#333',isMe:false,starters:sq.starters,bench:sq.bench,budget:d.budget||1000000,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]};};
-      var _promoNames2=(_prevOtherSorted.length>=2?_prevOtherSorted:KKD_BUILTIN.teams).slice(0,2).map(function(t){return t.name;});
-      var nt2=KKD_BUILTIN.teams.filter(function(d){return _promoNames2.indexOf(d.name)<0;}).map(function(d){return _mkNt2(d);});
+      var _promoNames2=(_prevOtherSorted.length>=2?_prevOtherSorted:KKD_BUILTIN.teams).filter(function(t){return t.name.indexOf('Jong')<0;}).slice(0,2).map(function(t){return t.name;});
       var _otherRel=standings.slice(standings.length-2).filter(function(t){return t.name!==G.myName;})[0];
+      var _excludeKKD=_promoNames2.concat([G.myName]).concat(_otherRel?[_otherRel.name]:[]);
+      var nt2=KKD_BUILTIN.teams.filter(function(d){return _excludeKKD.indexOf(d.name)<0;}).map(function(d){return _mkNt2(d);});
       if(_otherRel){var _otherRelD=LOADED_TEAMS.find(function(t){return t.name===_otherRel.name;})||EREDIVISIE_BUILTIN.teams.find(function(t){return t.name===_otherRel.name;})||{allPlayers:[],tier:65,budget:800000,imageUrl:'',primaryColor:'#555'};nt2.push(_mkNt2(_otherRelD,_otherRel.name));}
       nt2.push(Object.assign({},mt,{isMe:true,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]}));
       G.teams=nt2;
       LOADED_TEAMS=KKD_BUILTIN.teams.map(function(t){return Object.assign({},t,{fullName:t.fullName||t.name,allPlayers:(t.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});});
       alert('Je degradeert naar de Keuken Kampioen Divisie! (-500 punten)');
-      var _newEre=standings.slice(0,standings.length-2).map(function(t){return t.name;}).concat((_prevOtherSorted.length>=2?_prevOtherSorted:KKD_BUILTIN.teams).slice(0,2).map(function(t){return t.name;}));
+      var _newEre=standings.slice(0,standings.length-2).map(function(t){return t.name;}).concat(_promoNames2);
       G.otherSchedule=buildSchedule(_newEre);
       G.otherStandings=_newEre.map(function(n){return {name:n,rating:70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
     }
