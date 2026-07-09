@@ -1376,7 +1376,7 @@ function mvToRating(mv) {
 
 /** Dynamic market value — base €800K at rating 66 age 27, exponential scale 1.135/pt, age modifier */
 function calculatePlayerValue(rating, age) {
-  const base = Math.round(Math.pow(10, (rating - 50) / 49 * 3 + 5));
+  const base = Math.round(190000 * Math.pow(1.18, rating - 50));
   const ageMod = age <= 23 ? 1.25 : age <= 26 ? 1.10 : age <= 29 ? 1.00 : age <= 32 ? 0.75 : 0.45;
   return Math.round(base * ageMod);
 }
@@ -1462,6 +1462,7 @@ async function loadEredivisieData(afterLoad) {
       LOADED_TEAMS = EREDIVISIE_BUILTIN.teams.map(t => ({
         ...t,
         fullName: t.fullName || t.name,
+        budget: Math.max(2000000, t.budget * 4),
         allPlayers: (t.allPlayers || []).map(p => ({ ...p, fitness: 100, value: calculatePlayerValue(p.rating || 65, p.age || 27) })),
       }));
       LOADED_TEAMS.sort((a, b) => b.tier - a.tier);
@@ -1512,14 +1513,14 @@ async function loadEredivisieData(afterLoad) {
             pos:     POS_MAP[p.position] || null,
             rating:  mvToRating(p.marketValue),
             fitness: 100,
-            value:   p.marketValue || 80000,
+            value:   calcValue(mvToRating(p.marketValue)),
             age:     p.age,
           }))
           .filter(p => p.pos !== null);
 
         const top11 = [...allPlayers].sort((a,b) => b.rating - a.rating).slice(0, 11);
         const tier   = top11.length > 0 ? Math.round(avg(top11.map(p => p.rating))) : 65;
-        const budget = Math.round((profileData.currentMarketValue || 15000000) * 0.05);
+        const budget = Math.round(Math.max(2000000, Math.round((profileData.currentMarketValue || 30000000) * 0.20)));
 
         return {
           id: club.id, name: NAME_SHORT[club.name] || club.name,
@@ -1927,7 +1928,7 @@ function playNextMatch() {
         myEvents:myEv, oppEvents:isHome?awayEvents:homeEvents, myName:G.myName, oppName:opp.name,
         grownPlayers:myTeam.starters.filter(p=>p._justGrew).map(p=>p.name)};
       G.results.push(myResult);
-      myTeam.budget+=outcome==='win'?200000:outcome==='draw'?80000:0;
+      myTeam.budget+=outcome==='win'?200000:outcome==='draw'?200000:0;
     }
   });
 
@@ -2955,7 +2956,7 @@ async function newSeason() {
   standings.forEach((team, idx) => {
     const rank  = idx + 1;
     const leagueFactor = G.league === 'kkd' ? 0.1 : 1.0;
-    const prize = Math.max(50000, Math.round((nTeams - rank + 1) * 1000000 * leagueFactor));
+    const prize = Math.max(50000, Math.round((nTeams - rank + 1) * 4000000 * leagueFactor));
     if (team.isMe) { team.budget = (team.budget || 0) + prize; }
     else           { team.budget = (team.budget || 0) + prize; }
   });
@@ -3084,7 +3085,7 @@ async function newSeason() {
   showTab('dashboard');
   renderDashboard();
   renderStandings();
-  const prizeStr = Math.round(Math.max(500000, (nTeams - myRank + 1) * 1000000) / 1000000 * 10) / 10;
+  const prizeStr = Math.round(Math.max(2000000, (nTeams - myRank + 1) * 4000000) / 1000000 * 10) / 10;
     await pushLeaderboard();
   await loadLeaderboard('save-lb-list');
   toast('Seizoen ' + (G.season-1) + ' klaar! Plek ' + myRank + ' — +€' + prizeStr + 'M — +' + _lbPts + ' LB punten 🏆');
