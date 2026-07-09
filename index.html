@@ -3056,7 +3056,7 @@ async function newSeason() {
       G.teams=nt;
       LOADED_TEAMS=EREDIVISIE_BUILTIN.teams.map(function(t){return Object.assign({},t,{fullName:t.fullName||t.name,allPlayers:(t.allPlayers||[]).map(function(p){return Object.assign({},p,{fitness:100,value:calculatePlayerValue(p.rating||65,p.age||27)});})});});
       alert('Gefeliciteerd! Je promoveert naar de Eredivisie! (+500 punten)');
-      var _newKKD=standings.slice(2).map(function(t){return t.name;}).concat((_prevOtherSorted.length>=2?_prevOtherSorted:EREDIVISIE_BUILTIN.teams).slice(-2).map(function(t){return t.name;}));
+      var _newKKD=standings.slice(1).filter(function(t){return t.name!==_sec2.name;}).map(function(t){return t.name;}).concat((_prevOtherSorted.length>=2?_prevOtherSorted:EREDIVISIE_BUILTIN.teams).slice(-2).map(function(t){return t.name;}));
       G.otherSchedule=buildSchedule(_newKKD);
       G.otherStandings=_newKKD.map(function(n){return {name:n,rating:70,points:0,wins:0,draws:0,losses:0,gf:0,ga:0};});
     }else if(G.league==='eredivisie'&&myRank>=G.teams.length-1){
@@ -3066,7 +3066,7 @@ async function newSeason() {
       var _promoNames2=(_prevOtherSorted.length>=2?_prevOtherSorted:KKD_BUILTIN.teams).filter(function(t){return t.name.indexOf('Jong')<0;}).slice(0,2).map(function(t){return t.name;});
       var _otherRel=standings.slice(standings.length-2).filter(function(t){return t.name!==G.myName;})[0];
       var _excludeKKD=_promoNames2.concat([G.myName]).concat(_otherRel?[_otherRel.name]:[]);
-      var nt2=KKD_BUILTIN.teams.filter(function(d){return _excludeKKD.indexOf(d.name)<0;}).map(function(d){return _mkNt2(d);});
+      var _kkdSrc=(_prevOtherSorted.length>=2?_prevOtherSorted:KKD_BUILTIN.teams);var nt2=_kkdSrc.filter(function(t){return _excludeKKD.indexOf(t.name)<0;}).map(function(t){var d=KKD_BUILTIN.teams.find(function(b){return b.name===t.name;})||LOADED_TEAMS.find(function(b){return b.name===t.name;})||{allPlayers:[],tier:70,budget:1000000,imageUrl:'',primaryColor:'#555'};return _mkNt2(d,t.name);});
       if(_otherRel){var _otherRelD=LOADED_TEAMS.find(function(t){return t.name===_otherRel.name;})||EREDIVISIE_BUILTIN.teams.find(function(t){return t.name===_otherRel.name;})||{allPlayers:[],tier:65,budget:800000,imageUrl:'',primaryColor:'#555'};nt2.push(_mkNt2(_otherRelD,_otherRel.name));}
       nt2.push(Object.assign({},mt,{isMe:true,points:0,wins:0,draws:0,losses:0,gf:0,ga:0,form:[]}));
       G.teams=nt2;
