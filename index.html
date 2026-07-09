@@ -1310,7 +1310,8 @@ async function pushLeaderboard() {
         playerName: CURRENT_USER.username,
         club:       G.myName,
         seasons:    G.completedSeasons || 0,
-        points:     G.careerLeaderboardPoints || 0
+        points:     G.careerLeaderboardPoints || 0,
+        titles:     G.championsCount || 0
       })
     });
   } catch(e) { console.warn('Leaderboard push mislukt:', e); }
@@ -1337,10 +1338,10 @@ function renderLeaderboard(entries, targetId) {
     return;
   }
   var myCareerId = (typeof G !== 'undefined' && G.careerId) ? G.careerId : '';
-  el.innerHTML = '<table class="lb-table"><thead><tr><th>#</th><th>Naam</th><th>Club</th><th class="lb-ctr">Sz</th><th class="lb-pts">Punten</th></tr></thead><tbody>' +
+  el.innerHTML = '<table class="lb-table"><thead><tr><th>#</th><th>Naam</th><th>Club</th><th class="lb-ctr">Sz</th><th class="lb-pts">Punten</th><th>🏆</th></tr></thead><tbody>' +
     entries.map(function(e, i) {
       var cls = e.careerId === myCareerId ? ' class="me"' : '';
-      return '<tr' + cls + '><td style="color:var(--dim)">' + (i+1) + '</td><td><b>' + e.playerName + '</b></td><td style="color:var(--dim)">' + e.club + '</td><td class="lb-ctr">' + e.seasons + '</td><td class="lb-pts">' + (e.points||0).toLocaleString('nl-NL') + '</td></tr>';
+      return '<tr' + cls + '><td style="color:var(--dim)">' + (i+1) + '</td><td><b>' + e.playerName + '</b></td><td style="color:var(--dim)">' + e.club + '</td><td class="lb-ctr">' + e.seasons + '</td><td class="lb-pts">' + (e.points||0).toLocaleString('nl-NL') + '</td><td>' + (e.titles > 0 ? '🏆'.repeat(e.titles) : '-') + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 
@@ -1663,6 +1664,7 @@ function startGame(teamIdx) {
     topScorers:  {},
     careerId:    Date.now().toString(36) + Math.random().toString(36).slice(2),
     careerLeaderboardPoints: 0,
+    championsCount:          0,
     completedSeasons: 0,
     history:         [],
     league: G.league || 'eredivisie',
@@ -2935,6 +2937,7 @@ async function newSeason() {
   if ((G.completedSeasons || 0) < 10) {
     const _mult = G.careerMultiplier || 1;
     G.careerLeaderboardPoints = (G.careerLeaderboardPoints || 0) + Math.round(_lbPts.total * _mult);
+    if (_lbPts.rank === 0) G.championsCount = (G.championsCount || 0) + 1;
   }
   G.completedSeasons        = (G.completedSeasons || 0) + 1;
 
