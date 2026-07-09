@@ -844,8 +844,9 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
   </div>
 </div>
 
-<div class="modal-bg" id="modal-leaderboard">
-  <div class="modal modal-wide">
+<div class="modal-bg" id="modal-leaderboard" onclick="this.classList.remove('open')">
+  <div class="modal modal-wide" onclick="event.stopPropagation()" style="position:relative">
+    <button onclick="document.getElementById('modal-leaderboard').classList.remove('open')" style="position:absolute;top:16px;right:16px;background:var(--panel2);border:1px solid var(--border);color:var(--dim);border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;line-height:1;z-index:1">✕</button>
     <h2>🌍 Globale Ranglijst</h2>
     <div id="lb-modal-list"><div class="lb-empty">Laden…</div></div>
       <details class="score-info">
