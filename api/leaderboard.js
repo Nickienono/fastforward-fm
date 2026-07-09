@@ -52,7 +52,7 @@ module.exports = async function handler(req, res) {
   // ── POST: upsert career entry ──
   if (req.method === 'POST') {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { careerId, playerName, club, seasons, points } = body || {};
+    const { careerId, playerName, club, seasons, points, titles } = body || {};
 
     if (!careerId || !playerName || !club) {
       return res.status(400).json({ error: 'careerId, playerName en club zijn verplicht.' });
@@ -64,6 +64,7 @@ module.exports = async function handler(req, res) {
       club,
       seasons:   seasons   || 0,
       points:    points    || 0,
+      titles:    titles    || 0,
       updatedAt: new Date().toISOString(),
     });
 
