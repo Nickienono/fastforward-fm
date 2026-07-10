@@ -2934,7 +2934,7 @@ function calcPlayerValue(rating, age) {
 async function newSeason() {
   if(G.completedSeasons>=10){toast('🏆 Max. 10 seizoenen bereikt! Je piek-score is vergrendeld.');return;}
   // ── 0. Bereken leaderboard-punten voor dit seizoen ──
-  var _lbPts = calcLeaderboardPoints();
+  var _lbPts = calcLeaderboardPoints().total;
   // ── Leaderboard cap: max 10 seizoenen ──
   if ((G.completedSeasons || 0) < 10) {
     const _mult = G.careerMultiplier || 1;
