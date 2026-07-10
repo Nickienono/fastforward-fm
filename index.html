@@ -2577,7 +2577,7 @@ function renderTransfers(){
   var bar=document.getElementById('transfer-cap-bar');
   if(bar)bar.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:var(--dim);margin-bottom:6px"><span>📋 Transfers: <strong style="color:'+(cap>=20?'var(--red)':'var(--fg)')+'">'+cap+'/20</strong></span><span>💰 Budget: <strong>'+fmtMoney(budget)+'</strong></span></div>';
   var pool=G.scoutPool||G.market||[];
-  var listEl=document.getElementById('scout-pool-list');
+  var listEl=document.getElementById('scout-free-list');
   if(!listEl)return;
   if(!pool.length){listEl.innerHTML='<p style="color:var(--dim);text-align:center;padding:20px">Geen vrije spelers. Klik Verversen.</p>';return;}
   var noCap=cap>=20;
