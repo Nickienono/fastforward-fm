@@ -549,6 +549,7 @@ tr.me td:first-child { border-left: 2px solid var(--gold); }
     <div style="font-size:0.78rem;color:var(--dim);margin-bottom:6px;font-weight:600;letter-spacing:.04em">🏆 LEADERBOARD</div>
     <div id="lobby-lb-content" style="padding:4px 0;color:var(--dim);">Laden...</div>
   </div></div>
+<button class="btn-primary" style="margin-top:18px;width:100%;max-width:340px;font-size:1rem;padding:14px" onclick="showScreen('select')">▶ Start / Kies Je Club</button>
 </div>
 <div id="screen-select" class="screen">
   <img src="/Fast%20Forward%20FM%20-%20logo%20v2.png" alt="FastForward FM" style="max-width:220px;margin-bottom:8px;border-radius:10px;display:block;margin-left:auto;margin-right:auto">
@@ -1144,7 +1145,7 @@ async function launchGame(hasSave) {
       }
     } catch(_e) { console.warn('Lokale back-up laden mislukt:', _e); }
     // Alleen team-select als er echt geen carrière is
-    showScreen('lobby');
+    showScreen('lobby'); loadLeaderboard('lobby-lb-content');
   });
 }
 async function saveGame() {
