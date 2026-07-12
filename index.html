@@ -2353,9 +2353,9 @@ function renderBaseSubs() {
       const inP  = myTeam.bench[s.benchIdx];
       if (!outP || !inP) return '';
       return `<div class="sub-row">
-        <span class="sub-badge" style="border:1px solid var(--red)">${outP.name.split(' ').slice(1).join(' ')} (${outP.pos})</span>
+        <span class="sub-badge" style="border:1px solid var(--red)">${(outP.name||'').split(' ').slice(1).join(' ')} (${outP.pos})</span>
         <span class="sub-arrow">&#8594;</span>
-        <span class="sub-badge" style="border:1px solid var(--green)">${inP.name.split(' ').slice(1).join(' ')} (${inP.pos})</span>
+        <span class="sub-badge" style="border:1px solid var(--green)">${(inP.name||'').split(' ').slice(1).join(' ')} (${inP.pos})</span>
         <button class="btn-sub-rm" onclick="removeBaseSub(${i})" title="Verwijder">&#10005;</button>
       </div>`;
     }).join('');
@@ -2782,7 +2782,7 @@ function renderClubSearch(){
     if(clubVal&&team.name!==clubVal)return;
     (team.players||[]).forEach(function(p){
       if(posVal&&p.pos!==posVal)return;
-      if(naamVal&&!p.name.toLowerCase().includes(naamVal))return;
+      if(naamVal&&!(p.name||'').toLowerCase().includes(naamVal))return;
       if(ratingVal==='60'&&(p.rating<60||p.rating>=70))return;
       if(ratingVal==='70'&&(p.rating<70||p.rating>=80))return;
       if(ratingVal==='80'&&p.rating<80)return;
@@ -3304,9 +3304,9 @@ function renderPreMatchSubs() {
       const inP  = ml.bench[s.benchIdx];
       if (!outP || !inP) return '';
       return '<div class="sub-row">' +
-        '<span class="sub-badge" style="border:1px solid var(--red)">' + outP.name.split(' ').slice(1).join(' ') + ' (' + outP.pos + ')</span>' +
+        '<span class="sub-badge" style="border:1px solid var(--red)">' + (outP.name||'').split(' ').slice(1).join(' ') + ' (' + outP.pos + ')</span>' +
         '<span class="sub-arrow">→</span>' +
-        '<span class="sub-badge" style="border:1px solid var(--green)">' + inP.name.split(' ').slice(1).join(' ') + ' (' + inP.pos + ')</span>' +
+        '<span class="sub-badge" style="border:1px solid var(--green)">' + (inP.name||'').split(' ').slice(1).join(' ') + ' (' + inP.pos + ')</span>' +
         '<button class="btn-sub-rm" onclick="removePreMatchSub(' + i + ')" title="Verwijder">✕</button>' +
         '</div>';
     }).join('');
