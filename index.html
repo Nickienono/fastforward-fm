@@ -2431,7 +2431,7 @@ function renderOpsteliling(){
     var pc=posClass(s.pos);
     var act=(window._selSlot===si);
     if(p){
-      var nm=p.name.split(' ').slice(-1)[0];
+      var nm=(p.name||'').split(' ').slice(-1)[0];
       return '<div class="pcard '+pc+(act?' slot-active':'')+'" onclick="selectSlot('+si+')" style="min-width:72px;text-align:center">'+
         '<div class="prating">'+p.rating+'</div>'+
         '<div class="pname">'+nm+'</div>'+
@@ -2467,7 +2467,7 @@ function renderOpsteliling(){
   var bHtml='<div class="bench-pool"><div class="bench-pool-title">Bank</div><div class="bench-pool-grid">'+
     pool.map(function(p){
       var compat=(selPos===null||p.pos===selPos);
-      var nm=p.name.split(' ').slice(-1)[0];
+      var nm=(p.name||'').split(' ').slice(-1)[0];
       var dim=window._selSlot!==null&&!compat;
       var cand=window._selSlot!==null&&compat;
       var cls='pcard '+posClass(p.pos)+(cand?' bench-cand':dim?' bench-dim':'');
@@ -3193,7 +3193,7 @@ function renderPreMatch() {
       const sel = preMatchSelected && preMatchSelected.from === 'pitch' && preMatchSelected.idx === idx;
       return '<div class="pcard '+posClass(p.pos)+'' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'pitch\',' + idx + ')">' +
         '<div class="prating">' + p.rating + '</div>' +
-        '<div class="pname">' + p.name.split(' ').slice(1).join(' ') + '</div>' +
+        '<div class="pname">' + (p.name||'').split(' ').slice(1).join(' ') + '</div>' +
         '<div class="ppos">' + p.pos + '</div>' +
         '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
         '</div>';
@@ -3205,7 +3205,7 @@ function renderPreMatch() {
     const sel = preMatchSelected && preMatchSelected.from === 'bench' && preMatchSelected.idx === idx;
     return '<div class="pcard '+posClass(p.pos)+' bench-card' + (sel ? ' selected' : '') + '" onclick="selectPreMatchPlayer(\'bench\',' + idx + ')">' +
       '<div class="prating">' + p.rating + '</div>' +
-      '<div class="pname">' + p.name.split(' ').slice(1).join(' ') + '</div>' +
+      '<div class="pname">' + (p.name||'').split(' ').slice(1).join(' ') + '</div>' +
       '<div class="ppos">' + p.pos + '</div>' +
       '<div class="fitness-bar"><div class="fitness-fill ' + fitColor(p.fitness) + '" style="width:' + p.fitness + '%"></div></div>' +
       '</div>';
