@@ -11,7 +11,7 @@
   --panel2:  #1c2330;
   --border:  #30363d;
   --gold:    #f0a500;
-  --green:   #238636;
+  --green:   #238636;h
   --green2:  #2ea043;
   --red:     #da3633;
   --blue:    #388bfd;
@@ -2157,7 +2157,7 @@ function makeOffer(factor,askingPrice,playerId,sourceTeam){
   if(sourceTeam){
     aiTeam=G.teams.find(function(t){return t.name===sourceTeam;});
     if(!aiTeam){var otB=G.league==='kkd'?EREDIVISIE_BUILTIN:KKD_BUILTIN;aiTeam=((otB&&otB.teams)||[]).find(function(t){return t.name===sourceTeam;});}
-    if(aiTeam)player=(aiTeam.players||aiTeam.allPlayers||[]).find(function(p){return p.id===playerId;});
+    if(aiTeam)player=(aiTeam.players||aiTeam.allPlayers||(aiTeam.starters||[]).concat(aiTeam.bench||[])).find(function(p){return p.id===playerId;});
   } else {
     var pool=(G.scoutPool&&G.scoutPool.length)?G.scoutPool:G.market||[];
     player=pool.find(function(p){return p.id===playerId;});
