@@ -3013,6 +3013,14 @@ async function newSeason() {
   G.scoutPool = [];
   G.scoutPoolRound = -1;  // reset bij nieuw seizoen
   G.freeAgentsDatabase = generateFreeAgents();
+  // Career cap: stop na 10 seizoenen
+  if ((G.completedSeasons || 0) >= 10) {
+    await saveGame();
+    toast('🏆 Carrière afgesloten na 10 seizoenen! Bekijk het leaderboard voor je eindscore.');
+    showScreen('lobby');
+    if (typeof loadLeaderboard === 'function') loadLeaderboard('lobby-lb-content');
+    return;
+  }
   G.season++;
   G.round   = 0;
   G.results = [];
